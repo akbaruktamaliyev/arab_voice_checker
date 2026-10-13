@@ -165,7 +165,12 @@ ob_start();
 <div class="card section">
     <div class="section-head">
         <h2 style="margin:0">Scans — last 14 days</h2>
-        <div class="muted">Total: <strong><?= (int) $qr['scan_count'] ?></strong></div>
+        <div style="display:flex;align-items:center;gap:14px">
+            <span class="muted">Total: <strong><?= (int) $qr['scan_count'] ?></strong></span>
+            <?php if ((int) $qr['scan_count'] > 0): ?>
+                <a class="btn btn-ghost" href="<?= e(url('export.php?id=' . (int) $qr['id'])) ?>">Export CSV</a>
+            <?php endif; ?>
+        </div>
     </div>
     <svg viewBox="0 0 560 160" width="100%" height="160" role="img" aria-label="Scans per day">
         <?php $barW = 560 / count($days); ?>

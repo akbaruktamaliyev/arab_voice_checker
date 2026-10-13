@@ -23,6 +23,7 @@ host and it runs.
 - Custom colours and a centre logo saved per code; download as PNG or SVG
 - Every scan is counted; pause or delete a code at any point
 - Per-code analytics with a 14-day scan chart and totals dashboard
+- Export scans to CSV, per code or across every code
 
 ## Why buyers like it
 

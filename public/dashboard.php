@@ -39,7 +39,12 @@ ob_start();
 ?>
 <div class="section-head">
     <h1 style="margin:0">Your QR codes</h1>
-    <a class="btn btn-primary" href="<?= e(url('create.php')) ?>">+ New QR code</a>
+    <div style="display:flex;gap:10px">
+        <?php if ((int) $sum['scans'] > 0): ?>
+            <a class="btn btn-ghost" href="<?= e(url('export.php')) ?>">Export all scans (CSV)</a>
+        <?php endif; ?>
+        <a class="btn btn-primary" href="<?= e(url('create.php')) ?>">+ New QR code</a>
+    </div>
 </div>
 
 <div class="stats section">
