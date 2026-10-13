@@ -138,24 +138,6 @@ function delete_logo(?string $relPath): void
     }
 }
 
-/** Read a stored logo into a data: URI, for self-contained SVG export. */
-function logo_data_uri(?string $relPath): ?string
-{
-    if (!$relPath) {
-        return null;
-    }
-    $full = realpath(APP_ROOT . '/public/' . $relPath);
-    $base = realpath(logo_dir());
-    if ($full === false || $base === false || !str_starts_with($full, $base) || !is_file($full)) {
-        return null;
-    }
-    $info = @getimagesize($full);
-    if ($info === false) {
-        return null;
-    }
-    return 'data:' . $info['mime'] . ';base64,' . base64_encode((string) file_get_contents($full));
-}
-
 /**
  * Validate and normalise a URL supplied by the user.
  * Returns the cleaned URL, or null when it is not an acceptable http(s) link.

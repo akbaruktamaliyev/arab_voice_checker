@@ -30,32 +30,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newFg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
         $newBg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
 
-        $logoError = null;
-        $logoPath  = $qr['logo_path'];
-        try {
-            $uploaded = store_logo($_FILES['logo'] ?? []);
-            if ($uploaded !== null) {           // a new logo replaces the old one
-                delete_logo($qr['logo_path']);
-                $logoPath = $uploaded;
-            } elseif (!empty($_POST['remove_logo'])) {
-                delete_logo($qr['logo_path']);
-                $logoPath = null;
-            }
-        } catch (RuntimeException $e) {
-            $logoError = $e->getMessage();
-        }
-
-        if ($logoError !== null) {
-            flash($logoError, 'error');
-        } elseif ($newTitle !== '' && mb_strlen($newTitle) <= 120 && $newTarget !== null) {
-            $u = $pdo->prepare(
-                'UPDATE qr_codes SET title = ?, target_url = ?, fg_color = ?, bg_color = ?, logo_path = ?
-                 WHERE id = ? AND user_id = ?'
-            );
-            $u->execute([$newTitle, $newTarget, $newFg, $newBg, $logoPath, $id, $uid]);
-            flash('Changes saved.', 'success');
-        } else {
+        // Validate the text fields BEFORE touching any logo file, so a bad
+        // title can never leave the stored logo half-updated.
+        if ($newTitle === '' || mb_strlen($newTitle) > 120 || $newTarget === null) {
             flash('Please provide a title and a valid http(s) URL.', 'error');
+        } else {
+            try {
+                $logoPath = $qr['logo_path'];
+                $uploaded = store_logo($_FILES['logo'] ?? []);
+                if ($uploaded !== null) {           // a new logo replaces the old one
+                    delete_logo($qr['logo_path']);
+                    $logoPath = $uploaded;
+                } elseif (!empty($_POST['remove_logo'])) {
+                    delete_logo($qr['logo_path']);
+                    $logoPath = null;
+                }
+                $u = $pdo->prepare(
+                    'UPDATE qr_codes SET title = ?, target_url = ?, fg_color = ?, bg_color = ?, logo_path = ?
+                     WHERE id = ? AND user_id = ?'
+                );
+                $u->execute([$newTitle, $newTarget, $newFg, $newBg, $logoPath, $id, $uid]);
+                flash('Changes saved.', 'success');
+            } catch (RuntimeException $e) {
+                // store_logo() failed; the old logo and row are left untouched.
+                flash($e->getMessage(), 'error');
+            }
         }
     } elseif ($action === 'toggle') {
         $u = $pdo->prepare('UPDATE qr_codes SET is_active = 1 - is_active WHERE id = ? AND user_id = ?');
@@ -85,7 +84,6 @@ $maxN = max(1, max(array_column($days, 'n')));
 
 $shortUrl = url('q/' . $qr['code']);
 $logoUrl  = $qr['logo_path'] ? url($qr['logo_path']) : null;
-$logoData = logo_data_uri($qr['logo_path']); // self-contained SVG export
 $title = $qr['title'];
 ob_start();
 ?>
@@ -197,13 +195,14 @@ ob_start();
         var holder = document.getElementById('qr-holder');
         var url  = <?= json_encode($shortUrl) ?>;
         var name = 'qr-<?= e($qr['code']) ?>';
-        var logoUrl  = <?= json_encode($logoUrl) ?>;
-        var logoData = <?= json_encode($logoData) ?>;
+        var logoUrl = <?= json_encode($logoUrl) ?>;
         var fg = document.getElementById('fg_color');
         var bg = document.getElementById('bg_color');
+        var pngBtn = document.getElementById('qr-download-png');
+        var svgBtn = document.getElementById('qr-download-svg');
 
         var logoImg = null;
-        var ecc = logoData ? 'H' : 'M'; // stronger correction when a logo is set
+        var ecc = logoUrl ? 'H' : 'M'; // stronger correction when a logo is set
 
         function draw() {
             return QRaftRender.paint(holder, url, 240, fg.value, bg.value, ecc, logoImg);
@@ -211,20 +210,34 @@ ob_start();
         var qr = draw();
 
         // The stored logo is same-origin, so the canvas stays exportable.
+        // Hold PNG export until the logo has loaded, or it would export without it.
         if (logoUrl) {
+            pngBtn.setAttribute('disabled', 'disabled');
             var img = new Image();
-            img.onload = function () { logoImg = img; qr = draw(); };
+            img.onload = function () { logoImg = img; qr = draw(); pngBtn.removeAttribute('disabled'); };
             img.src = logoUrl;
         }
 
         [fg, bg].forEach(function (el) {
             el.addEventListener('input', function () { qr = draw(); });
         });
-        document.getElementById('qr-download-png').addEventListener('click', function () {
+        pngBtn.addEventListener('click', function () {
             QRaftRender.downloadPng(qr, 512, fg.value, bg.value, name, logoImg);
         });
-        document.getElementById('qr-download-svg').addEventListener('click', function () {
-            QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name, logoData);
+        svgBtn.addEventListener('click', function () {
+            // Fetch the logo only now (on demand) and inline it for a
+            // self-contained SVG — nothing is base64-encoded on page load.
+            if (!logoUrl) {
+                QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name, null);
+                return;
+            }
+            fetch(logoUrl).then(function (r) { return r.blob(); }).then(function (blob) {
+                var fr = new FileReader();
+                fr.onload = function () { QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name, fr.result); };
+                fr.readAsDataURL(blob);
+            }).catch(function () {
+                QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name, null);
+            });
         });
     })();
 </script>

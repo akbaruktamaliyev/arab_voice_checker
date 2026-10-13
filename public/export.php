@@ -62,7 +62,9 @@ header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
-fputcsv($out, $header);
+// escape: '' gives RFC-4180 quoting (no PHP backslash escaping), so fields
+// containing backslashes or quotes can't corrupt neighbouring columns.
+fputcsv($out, $header, ',', '"', '');
 
 while ($row = $query->fetch()) {
     if ($withCode) {
@@ -73,14 +75,14 @@ while ($row = $query->fetch()) {
             (string) $row['ip_hash'],
             csv_safe($row['user_agent']),
             csv_safe($row['referer']),
-        ]);
+        ], ',', '"', '');
     } else {
         fputcsv($out, [
             $row['scanned_at'],
             (string) $row['ip_hash'],
             csv_safe($row['user_agent']),
             csv_safe($row['referer']),
-        ]);
+        ], ',', '"', '');
     }
 }
 fclose($out);

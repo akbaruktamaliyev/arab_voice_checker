@@ -39,13 +39,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare(
-            'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
-        );
-        $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
-        login_user((int) $pdo->lastInsertId());
-        flash('Welcome to ' . config('app_name') . '! Your account is ready.', 'success');
-        redirect('dashboard.php');
+        try {
+            $stmt = $pdo->prepare(
+                'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
+            );
+            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
+            login_user((int) $pdo->lastInsertId());
+            flash('Welcome to ' . config('app_name') . '! Your account is ready.', 'success');
+            redirect('dashboard.php');
+        } catch (PDOException $e) {
+            // Safety net for the check-then-insert race: the unique index on
+            // email is the real guard, so a duplicate surfaces as a friendly
+            // message instead of an uncaught 500.
+            if ($e->getCode() === '23000') {
+                $errors[] = 'An account with that email already exists.';
+            } else {
+                throw $e;
+            }
+        }
     }
 }
 
