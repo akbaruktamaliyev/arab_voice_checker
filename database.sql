@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `qr_codes` (
     `target_url` VARCHAR(2048) NOT NULL,
     `fg_color`   CHAR(7)      NOT NULL DEFAULT '#000000',
     `bg_color`   CHAR(7)      NOT NULL DEFAULT '#ffffff',
+    `logo_path`  VARCHAR(255) NULL,
     `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
     `scan_count` INT UNSIGNED NOT NULL DEFAULT 0,
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

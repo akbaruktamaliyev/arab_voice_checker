@@ -26,13 +26,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
     $bg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
 
+    $logoPath = null;
+    if (!$errors) {
+        try {
+            $logoPath = store_logo($_FILES['logo'] ?? []);
+        } catch (RuntimeException $e) {
+            $errors[] = $e->getMessage();
+        }
+    }
+
     if (!$errors) {
         $code = generate_code($pdo, (int) config('code_length', 6));
         $stmt = $pdo->prepare(
-            'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color)
-             VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color, logo_path)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([current_user_id(), $code, $title_in, $target, $fg, $bg]);
+        $stmt->execute([current_user_id(), $code, $title_in, $target, $fg, $bg, $logoPath]);
         flash('Dynamic QR code created.', 'success');
         redirect('view.php?id=' . (int) $pdo->lastInsertId());
     }
@@ -49,7 +58,7 @@ ob_start();
         <?php foreach ($errors as $err): ?>
             <div class="flash flash-error"><?= e($err) ?></div>
         <?php endforeach; ?>
-        <form method="post" class="stack">
+        <form method="post" class="stack" enctype="multipart/form-data">
             <?= csrf_field() ?>
             <div class="field">
                 <label for="title">Title</label>
@@ -72,6 +81,10 @@ ob_start();
                     <input type="color" id="bg_color" name="bg_color"
                            value="<?= e($_POST['bg_color'] ?? '#ffffff') ?>">
                 </div>
+            </div>
+            <div class="field">
+                <label for="logo">Centre logo <span class="muted">(optional, PNG/JPG/WebP, max 1 MB)</span></label>
+                <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/webp">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Create QR code</button>
         </form>

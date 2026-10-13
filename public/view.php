@@ -29,12 +29,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newTarget = clean_url((string) ($_POST['target_url'] ?? ''));
         $newFg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
         $newBg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
-        if ($newTitle !== '' && mb_strlen($newTitle) <= 120 && $newTarget !== null) {
+
+        $logoError = null;
+        $logoPath  = $qr['logo_path'];
+        try {
+            $uploaded = store_logo($_FILES['logo'] ?? []);
+            if ($uploaded !== null) {           // a new logo replaces the old one
+                delete_logo($qr['logo_path']);
+                $logoPath = $uploaded;
+            } elseif (!empty($_POST['remove_logo'])) {
+                delete_logo($qr['logo_path']);
+                $logoPath = null;
+            }
+        } catch (RuntimeException $e) {
+            $logoError = $e->getMessage();
+        }
+
+        if ($logoError !== null) {
+            flash($logoError, 'error');
+        } elseif ($newTitle !== '' && mb_strlen($newTitle) <= 120 && $newTarget !== null) {
             $u = $pdo->prepare(
-                'UPDATE qr_codes SET title = ?, target_url = ?, fg_color = ?, bg_color = ?
+                'UPDATE qr_codes SET title = ?, target_url = ?, fg_color = ?, bg_color = ?, logo_path = ?
                  WHERE id = ? AND user_id = ?'
             );
-            $u->execute([$newTitle, $newTarget, $newFg, $newBg, $id, $uid]);
+            $u->execute([$newTitle, $newTarget, $newFg, $newBg, $logoPath, $id, $uid]);
             flash('Changes saved.', 'success');
         } else {
             flash('Please provide a title and a valid http(s) URL.', 'error');
@@ -66,6 +84,8 @@ for ($i = 13; $i >= 0; $i--) {
 $maxN = max(1, max(array_column($days, 'n')));
 
 $shortUrl = url('q/' . $qr['code']);
+$logoUrl  = $qr['logo_path'] ? url($qr['logo_path']) : null;
+$logoData = logo_data_uri($qr['logo_path']); // self-contained SVG export
 $title = $qr['title'];
 ob_start();
 ?>
@@ -84,7 +104,7 @@ ob_start();
     <div class="stack">
         <div class="card stack">
             <h2 style="margin:0">Edit</h2>
-            <form method="post" class="stack">
+            <form method="post" class="stack" enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="update">
                 <div class="field">
@@ -104,6 +124,15 @@ ob_start();
                         <label for="bg_color">Background</label>
                         <input type="color" id="bg_color" name="bg_color" value="<?= e($qr['bg_color']) ?>">
                     </div>
+                </div>
+                <div class="field">
+                    <label for="logo">Centre logo <span class="muted">(PNG/JPG/WebP, max 1 MB)</span></label>
+                    <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/webp">
+                    <?php if (!empty($qr['logo_path'])): ?>
+                        <label class="muted" style="font-weight:400;margin-top:8px">
+                            <input type="checkbox" name="remove_logo" value="1" style="width:auto"> Remove current logo
+                        </label>
+                    <?php endif; ?>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Save changes</button>
             </form>
@@ -163,22 +192,34 @@ ob_start();
         var holder = document.getElementById('qr-holder');
         var url  = <?= json_encode($shortUrl) ?>;
         var name = 'qr-<?= e($qr['code']) ?>';
+        var logoUrl  = <?= json_encode($logoUrl) ?>;
+        var logoData = <?= json_encode($logoData) ?>;
         var fg = document.getElementById('fg_color');
         var bg = document.getElementById('bg_color');
 
+        var logoImg = null;
+        var ecc = logoData ? 'H' : 'M'; // stronger correction when a logo is set
+
         function draw() {
-            return QRaftRender.paint(holder, url, 240, fg.value, bg.value, 'M');
+            return QRaftRender.paint(holder, url, 240, fg.value, bg.value, ecc, logoImg);
         }
         var qr = draw();
-        // Live preview when the colour pickers change (saved on "Save changes").
+
+        // The stored logo is same-origin, so the canvas stays exportable.
+        if (logoUrl) {
+            var img = new Image();
+            img.onload = function () { logoImg = img; qr = draw(); };
+            img.src = logoUrl;
+        }
+
         [fg, bg].forEach(function (el) {
             el.addEventListener('input', function () { qr = draw(); });
         });
         document.getElementById('qr-download-png').addEventListener('click', function () {
-            QRaftRender.downloadPng(qr, 512, fg.value, bg.value, name);
+            QRaftRender.downloadPng(qr, 512, fg.value, bg.value, name, logoImg);
         });
         document.getElementById('qr-download-svg').addEventListener('click', function () {
-            QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name);
+            QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name, logoData);
         });
     })();
 </script>

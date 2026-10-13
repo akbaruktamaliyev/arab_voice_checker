@@ -13,13 +13,14 @@ host and it runs.
 **Free static generator** (no account needed)
 - URL, plain text, email, phone, SMS, Wi-Fi and vCard QR codes
 - Live preview, four sizes, custom QR + background colours
+- Optional **centre logo** (auto-raises error correction so it still scans)
 - One-click **PNG and SVG** download
 - Generated entirely in the visitor's browser — nothing is uploaded
 
 **Dynamic QR codes** (SaaS, account required)
 - One short link per code: `yoursite.com/q/XXXXXX`
 - Change the destination any time — the printed QR never changes
-- Custom colours saved per code; download as PNG or SVG
+- Custom colours and a centre logo saved per code; download as PNG or SVG
 - Every scan is counted; pause or delete a code at any point
 - Per-code analytics with a 14-day scan chart and totals dashboard
 

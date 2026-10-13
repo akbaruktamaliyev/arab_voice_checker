@@ -13,10 +13,14 @@
     var sizeSel   = document.getElementById('qr-size');
     var fgInput   = document.getElementById('qr-fg');
     var bgInput   = document.getElementById('qr-bg');
+    var logoInput = document.getElementById('qr-logo');
+    var logoClear = document.getElementById('qr-logo-clear');
     var pngBtn    = document.getElementById('qr-download-png');
     var svgBtn    = document.getElementById('qr-download-svg');
 
-    var current = null; // last built matrix
+    var current = null;      // last built matrix
+    var logoImg = null;      // loaded logo Image, or null
+    var logoDataUrl = null;  // logo as a data: URL, for SVG export
 
     var TYPES = {
         url:   [{ name: 'url', label: 'Website URL', type: 'url', ph: 'https://example.com' }],
@@ -82,6 +86,9 @@
 
     function size() { return parseInt(sizeSel.value, 10) || 256; }
 
+    // Higher error correction when a logo covers the centre, so it still scans.
+    function ecc() { return logoImg ? 'H' : 'M'; }
+
     function render() {
         var value = buildValue();
         if (!value) {
@@ -92,7 +99,7 @@
             return;
         }
         try {
-            current = QRaftRender.paint(holder, value, size(), fgInput.value, bgInput.value, 'M');
+            current = QRaftRender.paint(holder, value, size(), fgInput.value, bgInput.value, ecc(), logoImg);
             pngBtn.removeAttribute('disabled');
             svgBtn.removeAttribute('disabled');
         } catch (err) {
@@ -140,11 +147,41 @@
         el.addEventListener('change', render);
         el.addEventListener('input', render);
     });
+
+    // Logo upload — handled entirely in the browser, never sent anywhere.
+    if (logoInput) {
+        logoInput.addEventListener('change', function () {
+            var file = logoInput.files && logoInput.files[0];
+            if (!file) return;
+            if (!/^image\//.test(file.type) || file.size > 1024 * 1024) {
+                alert('Please choose an image file under 1 MB.');
+                logoInput.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                logoDataUrl = ev.target.result;
+                var img = new Image();
+                img.onload = function () { logoImg = img; if (logoClear) logoClear.hidden = false; render(); };
+                img.src = logoDataUrl;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    if (logoClear) {
+        logoClear.addEventListener('click', function () {
+            logoImg = null; logoDataUrl = null;
+            if (logoInput) logoInput.value = '';
+            logoClear.hidden = true;
+            render();
+        });
+    }
+
     pngBtn.addEventListener('click', function () {
-        if (current) QRaftRender.downloadPng(current, size(), fgInput.value, bgInput.value, 'qr-' + typeSel.value);
+        if (current) QRaftRender.downloadPng(current, size(), fgInput.value, bgInput.value, 'qr-' + typeSel.value, logoImg);
     });
     svgBtn.addEventListener('click', function () {
-        if (current) QRaftRender.downloadSvg(current, size(), fgInput.value, bgInput.value, 'qr-' + typeSel.value);
+        if (current) QRaftRender.downloadSvg(current, size(), fgInput.value, bgInput.value, 'qr-' + typeSel.value, logoDataUrl);
     });
 
     buildFields();

@@ -1,0 +1,3 @@
+# Ignore uploaded logos, keep the folder
+*
+!.gitignore

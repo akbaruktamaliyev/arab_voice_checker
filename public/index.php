@@ -51,6 +51,12 @@ ob_start();
                     <input type="color" id="qr-bg" value="#ffffff">
                 </div>
             </div>
+            <div class="field">
+                <label for="qr-logo">Centre logo <span class="muted">(optional)</span></label>
+                <input type="file" id="qr-logo" accept="image/*">
+                <button type="button" id="qr-logo-clear" class="btn btn-ghost" hidden
+                        style="margin-top:8px">Remove logo</button>
+            </div>
         </div>
 
         <div class="card stack center">
