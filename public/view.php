@@ -27,9 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'update') {
         $newTitle  = trim((string) ($_POST['title'] ?? ''));
         $newTarget = clean_url((string) ($_POST['target_url'] ?? ''));
+        $newFg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
+        $newBg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
         if ($newTitle !== '' && mb_strlen($newTitle) <= 120 && $newTarget !== null) {
-            $u = $pdo->prepare('UPDATE qr_codes SET title = ?, target_url = ? WHERE id = ? AND user_id = ?');
-            $u->execute([$newTitle, $newTarget, $id, $uid]);
+            $u = $pdo->prepare(
+                'UPDATE qr_codes SET title = ?, target_url = ?, fg_color = ?, bg_color = ?
+                 WHERE id = ? AND user_id = ?'
+            );
+            $u->execute([$newTitle, $newTarget, $newFg, $newBg, $id, $uid]);
             flash('Changes saved.', 'success');
         } else {
             flash('Please provide a title and a valid http(s) URL.', 'error');
@@ -69,7 +74,10 @@ ob_start();
 <div class="grid-2 section">
     <div class="card stack center">
         <div class="qr-preview" id="qr-holder"></div>
-        <button type="button" id="qr-download" class="btn btn-primary btn-block">Download PNG</button>
+        <div class="row">
+            <button type="button" id="qr-download-png" class="btn btn-primary">Download PNG</button>
+            <button type="button" id="qr-download-svg" class="btn btn-ghost">Download SVG</button>
+        </div>
         <div class="muted" style="font-size:.85rem;word-break:break-all"><?= e($shortUrl) ?></div>
     </div>
 
@@ -86,6 +94,16 @@ ob_start();
                 <div class="field">
                     <label for="target_url">Destination URL</label>
                     <input type="text" id="target_url" name="target_url" value="<?= e($qr['target_url']) ?>" required>
+                </div>
+                <div class="row">
+                    <div class="field">
+                        <label for="fg_color">QR colour</label>
+                        <input type="color" id="fg_color" name="fg_color" value="<?= e($qr['fg_color']) ?>">
+                    </div>
+                    <div class="field">
+                        <label for="bg_color">Background</label>
+                        <input type="color" id="bg_color" name="bg_color" value="<?= e($qr['bg_color']) ?>">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Save changes</button>
             </form>
@@ -138,18 +156,29 @@ ob_start();
     </svg>
 </div>
 
-<script src="<?= e(url('assets/js/qrcode.min.js')) ?>"></script>
+<script src="<?= e(url('assets/js/qrcode-generator.min.js')) ?>"></script>
+<script src="<?= e(url('assets/js/qrender.js')) ?>"></script>
 <script>
     (function () {
         var holder = document.getElementById('qr-holder');
-        new QRCode(holder, { text: <?= json_encode($shortUrl) ?>, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
-        document.getElementById('qr-download').addEventListener('click', function () {
-            var img = holder.querySelector('img'), canvas = holder.querySelector('canvas');
-            var data = img ? img.src : (canvas ? canvas.toDataURL('image/png') : null);
-            if (!data) return;
-            var a = document.createElement('a');
-            a.href = data; a.download = 'qr-<?= e($qr['code']) ?>.png';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        var url  = <?= json_encode($shortUrl) ?>;
+        var name = 'qr-<?= e($qr['code']) ?>';
+        var fg = document.getElementById('fg_color');
+        var bg = document.getElementById('bg_color');
+
+        function draw() {
+            return QRaftRender.paint(holder, url, 240, fg.value, bg.value, 'M');
+        }
+        var qr = draw();
+        // Live preview when the colour pickers change (saved on "Save changes").
+        [fg, bg].forEach(function (el) {
+            el.addEventListener('input', function () { qr = draw(); });
+        });
+        document.getElementById('qr-download-png').addEventListener('click', function () {
+            QRaftRender.downloadPng(qr, 512, fg.value, bg.value, name);
+        });
+        document.getElementById('qr-download-svg').addEventListener('click', function () {
+            QRaftRender.downloadSvg(qr, 512, fg.value, bg.value, name);
         });
     })();
 </script>

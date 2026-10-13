@@ -1,20 +1,23 @@
-/* QRaft — client-side QR generator.
- * Builds the encoded string from the selected type, renders it locally with
- * qrcode.min.js (no data leaves the browser) and powers the PNG download. */
+/* QRaft — client-side QR generator (landing page).
+ * Builds the encoded string from the selected type and renders it locally with
+ * the shared QRaftRender module (no data leaves the browser). Supports custom
+ * colours and PNG/SVG download. */
 (function () {
     'use strict';
 
     var holder = document.getElementById('qr-holder');
-    if (!holder) return;
+    if (!holder || !window.QRaftRender) return;
 
     var typeSel   = document.getElementById('qr-type');
     var fieldsBox = document.getElementById('qr-fields');
-    var download  = document.getElementById('qr-download');
     var sizeSel   = document.getElementById('qr-size');
+    var fgInput   = document.getElementById('qr-fg');
+    var bgInput   = document.getElementById('qr-bg');
+    var pngBtn    = document.getElementById('qr-download-png');
+    var svgBtn    = document.getElementById('qr-download-svg');
 
-    var qr = null;
+    var current = null; // last built matrix
 
-    // Field definitions per QR type.
     var TYPES = {
         url:   [{ name: 'url', label: 'Website URL', type: 'url', ph: 'https://example.com' }],
         text:  [{ name: 'text', label: 'Text', type: 'text', ph: 'Any text you like' }],
@@ -44,7 +47,6 @@
 
     function esc(v) { return (v || '').replace(/([\\;,:"])/g, '\\$1'); }
 
-    // Turn the current field values into the string encoded in the QR.
     function buildValue() {
         var t = typeSel.value;
         var g = function (n) {
@@ -78,25 +80,29 @@
         return '';
     }
 
+    function size() { return parseInt(sizeSel.value, 10) || 256; }
+
     function render() {
         var value = buildValue();
-        holder.innerHTML = '';
         if (!value) {
             holder.innerHTML = '<span class="muted">Fill in the fields to see your QR code</span>';
-            download.setAttribute('disabled', 'disabled');
+            current = null;
+            pngBtn.setAttribute('disabled', 'disabled');
+            svgBtn.setAttribute('disabled', 'disabled');
             return;
         }
-        var size = parseInt(sizeSel.value, 10) || 256;
-        qr = new QRCode(holder, {
-            text: value,
-            width: size,
-            height: size,
-            correctLevel: QRCode.CorrectLevel.M
-        });
-        download.removeAttribute('disabled');
+        try {
+            current = QRaftRender.paint(holder, value, size(), fgInput.value, bgInput.value, 'M');
+            pngBtn.removeAttribute('disabled');
+            svgBtn.removeAttribute('disabled');
+        } catch (err) {
+            holder.innerHTML = '<span class="muted">That content is too long for one QR code.</span>';
+            current = null;
+            pngBtn.setAttribute('disabled', 'disabled');
+            svgBtn.setAttribute('disabled', 'disabled');
+        }
     }
 
-    // Build the input fields for the selected type.
     function buildFields() {
         var defs = TYPES[typeSel.value] || [];
         fieldsBox.innerHTML = '';
@@ -129,23 +135,17 @@
         render();
     }
 
-    // Download the rendered QR as a PNG.
-    function downloadPng() {
-        var img = holder.querySelector('img');
-        var canvas = holder.querySelector('canvas');
-        var dataUrl = img ? img.src : (canvas ? canvas.toDataURL('image/png') : null);
-        if (!dataUrl) return;
-        var a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = 'qr-' + typeSel.value + '.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-
     typeSel.addEventListener('change', buildFields);
-    sizeSel.addEventListener('change', render);
-    download.addEventListener('click', downloadPng);
+    [sizeSel, fgInput, bgInput].forEach(function (el) {
+        el.addEventListener('change', render);
+        el.addEventListener('input', render);
+    });
+    pngBtn.addEventListener('click', function () {
+        if (current) QRaftRender.downloadPng(current, size(), fgInput.value, bgInput.value, 'qr-' + typeSel.value);
+    });
+    svgBtn.addEventListener('click', function () {
+        if (current) QRaftRender.downloadSvg(current, size(), fgInput.value, bgInput.value, 'qr-' + typeSel.value);
+    });
 
     buildFields();
 })();

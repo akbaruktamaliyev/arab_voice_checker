@@ -12,12 +12,14 @@ host and it runs.
 
 **Free static generator** (no account needed)
 - URL, plain text, email, phone, SMS, Wi-Fi and vCard QR codes
-- Live preview, four sizes, one-click PNG download
+- Live preview, four sizes, custom QR + background colours
+- One-click **PNG and SVG** download
 - Generated entirely in the visitor's browser — nothing is uploaded
 
 **Dynamic QR codes** (SaaS, account required)
 - One short link per code: `yoursite.com/q/XXXXXX`
 - Change the destination any time — the printed QR never changes
+- Custom colours saved per code; download as PNG or SVG
 - Every scan is counted; pause or delete a code at any point
 - Per-code analytics with a 14-day scan chart and totals dashboard
 
@@ -72,8 +74,9 @@ docs/                Installation guide
 
 ## Credits
 
-QR rendering in the browser uses **qrcodejs** by David Shim (MIT), bundled in
-`public/assets/js/qrcode.min.js`. Everything else is original.
+QR rendering in the browser uses **qrcode-generator** by Kazuhiko Arase (MIT),
+bundled in
+`public/assets/js/qrcode-generator.min.js`. Everything else is original.
 
 ## License
 

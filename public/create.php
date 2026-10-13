@@ -23,14 +23,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($target === null) {
         $errors[] = 'Please enter a valid http(s) destination URL.';
     }
+    $fg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
+    $bg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
 
     if (!$errors) {
         $code = generate_code($pdo, (int) config('code_length', 6));
         $stmt = $pdo->prepare(
-            'INSERT INTO qr_codes (user_id, code, title, target_url)
-             VALUES (?, ?, ?, ?)'
+            'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color)
+             VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([current_user_id(), $code, $title_in, $target]);
+        $stmt->execute([current_user_id(), $code, $title_in, $target, $fg, $bg]);
         flash('Dynamic QR code created.', 'success');
         redirect('view.php?id=' . (int) $pdo->lastInsertId());
     }
@@ -58,6 +60,18 @@ ob_start();
                 <label for="target_url">Destination URL</label>
                 <input type="text" id="target_url" name="target_url"
                        value="<?= e($target_in) ?>" placeholder="https://example.com/menu" required>
+            </div>
+            <div class="row">
+                <div class="field">
+                    <label for="fg_color">QR colour</label>
+                    <input type="color" id="fg_color" name="fg_color"
+                           value="<?= e($_POST['fg_color'] ?? '#000000') ?>">
+                </div>
+                <div class="field">
+                    <label for="bg_color">Background</label>
+                    <input type="color" id="bg_color" name="bg_color"
+                           value="<?= e($_POST['bg_color'] ?? '#ffffff') ?>">
+                </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Create QR code</button>
         </form>

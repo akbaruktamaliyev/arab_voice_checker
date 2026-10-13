@@ -41,15 +41,26 @@ ob_start();
                     <option value="512">Extra large (512px)</option>
                 </select>
             </div>
+            <div class="row">
+                <div class="field">
+                    <label for="qr-fg">QR colour</label>
+                    <input type="color" id="qr-fg" value="#000000">
+                </div>
+                <div class="field">
+                    <label for="qr-bg">Background</label>
+                    <input type="color" id="qr-bg" value="#ffffff">
+                </div>
+            </div>
         </div>
 
         <div class="card stack center">
             <div class="qr-preview" id="qr-holder">
                 <span class="muted">Fill in the fields to see your QR code</span>
             </div>
-            <button type="button" id="qr-download" class="btn btn-primary btn-block" disabled>
-                Download PNG
-            </button>
+            <div class="row">
+                <button type="button" id="qr-download-png" class="btn btn-primary" disabled>Download PNG</button>
+                <button type="button" id="qr-download-svg" class="btn btn-ghost" disabled>Download SVG</button>
+            </div>
             <p class="muted" style="font-size:.85rem">
                 Everything is generated on your device — nothing is uploaded.
             </p>
@@ -70,7 +81,8 @@ ob_start();
     </div>
 </section>
 
-<script src="<?= e(url('assets/js/qrcode.min.js')) ?>"></script>
+<script src="<?= e(url('assets/js/qrcode-generator.min.js')) ?>"></script>
+<script src="<?= e(url('assets/js/qrender.js')) ?>"></script>
 <script src="<?= e(url('assets/js/app.js')) ?>"></script>
 <?php
 $content = ob_get_clean();

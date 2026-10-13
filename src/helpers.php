@@ -68,6 +68,15 @@ function generate_code(PDO $pdo, int $length): string
 }
 
 /**
+ * Validate a hex colour (#rrggbb). Returns the lowercased value, or a fallback.
+ */
+function clean_color(string $value, string $fallback): string
+{
+    $value = trim($value);
+    return preg_match('/^#[0-9a-fA-F]{6}$/', $value) ? strtolower($value) : $fallback;
+}
+
+/**
  * Validate and normalise a URL supplied by the user.
  * Returns the cleaned URL, or null when it is not an acceptable http(s) link.
  */

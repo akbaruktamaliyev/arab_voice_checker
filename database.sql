@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS `qr_codes` (
     `code`       VARCHAR(16)  NOT NULL,
     `title`      VARCHAR(120) NOT NULL,
     `target_url` VARCHAR(2048) NOT NULL,
+    `fg_color`   CHAR(7)      NOT NULL DEFAULT '#000000',
+    `bg_color`   CHAR(7)      NOT NULL DEFAULT '#ffffff',
     `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
     `scan_count` INT UNSIGNED NOT NULL DEFAULT 0,
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
