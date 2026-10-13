@@ -25,10 +25,17 @@ function url(string $path = ''): string
     return $base . '/' . ltrim($path, '/');
 }
 
-/** Redirect and stop. */
+/**
+ * Redirect and stop.
+ *
+ * Internal targets redirect RELATIVE to the current host, so the app always
+ * stays on whatever address the visitor opened it with (localhost, a LAN IP, a
+ * domain behind a proxy) and the session cookie keeps working. base_url is only
+ * for QR content, not for navigation. Absolute http(s) targets pass through.
+ */
 function redirect(string $path): never
 {
-    header('Location: ' . (str_starts_with($path, 'http') ? $path : url($path)));
+    header('Location: ' . $path);
     exit;
 }
 
