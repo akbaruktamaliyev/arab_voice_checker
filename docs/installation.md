@@ -76,6 +76,21 @@ Create a vhost whose `DocumentRoot` is the `public` folder and allow
 
 Make sure `mod_rewrite` is enabled (`a2enmod rewrite`).
 
+### Quick run without Apache/nginx (PHP built-in server)
+
+For a fast local try-out you can skip Apache entirely and use PHP's built-in
+server with the bundled `router.php` (it reproduces the `/q/{code}` rewrite,
+which the built-in server would otherwise ignore):
+
+```bash
+php -S 0.0.0.0:8000 -t public router.php
+```
+
+Then set `base_url` to the address you open — `http://localhost:8000`, or your
+machine's LAN IP (e.g. `http://192.168.1.50:8000`) if you want to scan the
+dynamic codes from a phone on the same network. `router.php` is only for this
+dev server; Apache/nginx use the rules below instead.
+
 ### nginx
 
 Point the root at `public` and add the dynamic-QR rewrite:
