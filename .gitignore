@@ -1,0 +1,11 @@
+# Local configuration with real credentials — never commit this.
+/config.php
+
+# Editor / OS noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# PHP dependency folder (not used by default, but just in case)
+/vendor/

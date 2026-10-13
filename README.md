@@ -1,1 +1,81 @@
-# arab_voice_checker
+# QRaft — QR Code Generator & Dynamic QR SaaS
+
+A clean, self-hosted QR code platform built with plain PHP and MySQL. No
+framework, no Composer dependencies, no external APIs — drop it on any PHP 8
+host and it runs.
+
+![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
+![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-00618a)
+![License](https://img.shields.io/badge/license-Envato-4f46e5)
+
+## What it does
+
+**Free static generator** (no account needed)
+- URL, plain text, email, phone, SMS, Wi-Fi and vCard QR codes
+- Live preview, four sizes, one-click PNG download
+- Generated entirely in the visitor's browser — nothing is uploaded
+
+**Dynamic QR codes** (SaaS, account required)
+- One short link per code: `yoursite.com/q/XXXXXX`
+- Change the destination any time — the printed QR never changes
+- Every scan is counted; pause or delete a code at any point
+- Per-code analytics with a 14-day scan chart and totals dashboard
+
+## Why buyers like it
+
+- **Zero dependencies.** Pure PHP + PDO. No `composer install`, no build step.
+- **Secure by default.** Prepared statements everywhere, hashed passwords
+  (`password_hash`), CSRF tokens on every form, output escaping, and
+  scheme-validated URLs. IPs are stored only as salted hashes.
+- **Readable code.** Small files, clear structure, commented throughout — easy
+  to rebrand and extend.
+- **Mobile-friendly UI** with a single, themeable stylesheet.
+
+## Requirements
+
+- PHP 8.0 or newer (PDO + pdo_mysql enabled — standard in Laragon/XAMPP)
+- MySQL 5.7+ or MariaDB 10.3+
+- Apache with mod_rewrite, or nginx (one rewrite rule — see docs)
+
+## Quick start
+
+```bash
+# 1. Create the database and tables
+mysql -u root -p < database.sql
+
+# 2. Configure
+cp config.example.php config.php
+#    then edit config.php: database credentials + base_url
+
+# 3. Point your web server's document root at the /public folder
+#    (Laragon: the vhost is created automatically)
+```
+
+Open the site, create an account, and make your first dynamic QR code.
+Full steps are in [docs/installation.md](docs/installation.md).
+
+## Project structure
+
+```
+config.example.php   Configuration template
+database.sql         Schema (users, qr_codes, qr_scans)
+src/                 Bootstrap, DB, auth, CSRF, helpers, layout
+public/              Web root — pages, redirect endpoint, assets
+docs/                Installation guide
+```
+
+## Security notes
+
+- Keep `config.php` out of the web root's listing (handled by `.htaccess`).
+- Always serve over HTTPS in production so sessions and logins stay private.
+- Set `base_url` to your real public address — it is what the QR codes encode.
+
+## Credits
+
+QR rendering in the browser uses **qrcodejs** by David Shim (MIT), bundled in
+`public/assets/js/qrcode.min.js`. Everything else is original.
+
+## License
+
+Sold under the Envato Market license you purchased (Regular or Extended). See
+your purchase for details.

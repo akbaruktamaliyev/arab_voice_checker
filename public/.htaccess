@@ -1,0 +1,15 @@
+# QRaft — pretty URL for dynamic QR codes.
+# Maps /q/{code} to q.php?c={code}. Requires Apache mod_rewrite (on by
+# default in Laragon/XAMPP). On nginx, add an equivalent rewrite instead.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # /q/ABC123  ->  q.php?c=ABC123
+    RewriteRule ^q/([A-Za-z0-9]+)/?$ q.php?c=$1 [L,QSA]
+</IfModule>
+
+# Don't serve the raw config or SQL even if the web root is misconfigured.
+<FilesMatch "\.(sql|md)$">
+    Require all denied
+</FilesMatch>
