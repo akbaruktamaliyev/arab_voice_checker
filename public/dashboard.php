@@ -77,6 +77,7 @@ ob_start();
 <div class="section-head">
     <h1 style="margin:0">Your QR codes</h1>
     <div style="display:flex;gap:10px">
+        <a class="btn btn-ghost" href="<?= e(url('bulk.php')) ?>">Bulk import</a>
         <a class="btn btn-ghost" href="<?= e(url('tokens.php')) ?>">API</a>
         <?php if ((int) $sum['scans'] > 0): ?>
             <a class="btn btn-ghost" href="<?= e(url('export.php')) ?>">Export all scans (CSV)</a>
