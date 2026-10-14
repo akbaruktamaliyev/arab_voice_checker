@@ -17,6 +17,12 @@ host and it runs.
 - One-click **PNG and SVG** download
 - Generated entirely in the visitor's browser — nothing is uploaded
 
+**Admin & setup**
+- Web installer: database setup, schema import and admin creation from the browser
+- Admin panel: user management (suspend, promote, delete) and site settings
+- Configurable site name, registration toggle and SMTP, all from the admin UI
+- Light / dark theme with a one-click toggle
+
 **Dynamic QR codes** (SaaS, account required)
 - One short link per code: `yoursite.com/q/XXXXXX`, or a custom code like `/q/summer-menu`
 - Change the destination any time — the printed QR never changes

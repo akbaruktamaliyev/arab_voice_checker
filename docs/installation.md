@@ -5,7 +5,20 @@ install on any Apache or nginx host.
 
 ---
 
-## 1. Create the database
+## Easiest: the web installer
+
+1. Upload the files and point the web server's document root at the **`public`**
+   folder (see step 3 below for Laragon/Apache/nginx).
+2. Open the site in a browser — you are sent to `install/` automatically.
+3. Enter your database details and create the admin account. The installer
+   creates the database, imports the schema, and writes `config.php` for you.
+4. **Delete the `public/install/` folder** when it finishes, then sign in.
+
+Prefer to do it by hand? Follow the manual steps below instead.
+
+---
+
+## 1. Create the database (manual install)
 
 Open a terminal (or Laragon → Menu → MySQL → console) and run:
 

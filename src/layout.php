@@ -12,16 +12,25 @@
 
 declare(strict_types=1);
 
-$appName = (string) config('app_name', 'QRaft');
-$uid     = current_user_id();
+$appName  = app_name();
+$uid      = current_user_id();
+$viewer   = $uid !== null ? current_user($pdo) : null;
+$isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
 ?>
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ?? $appName) . ' · ' . $appName) ?></title>
     <link rel="stylesheet" href="<?= e(url('assets/css/style.css')) ?>">
+    <script>
+        // Apply the saved theme before paint to avoid a flash.
+        try {
+            var t = localStorage.getItem('qraft-theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    </script>
 </head>
 <body>
 <header class="site-header">
@@ -33,11 +42,15 @@ $uid     = current_user_id();
             <a href="<?= e(url('index.php')) ?>">Generator</a>
             <?php if ($uid !== null): ?>
                 <a href="<?= e(url('dashboard.php')) ?>">Dashboard</a>
+                <?php if ($isAdmin): ?>
+                    <a href="<?= e(url('admin/index.php')) ?>">Admin</a>
+                <?php endif; ?>
                 <a class="btn btn-ghost" href="<?= e(url('logout.php')) ?>">Sign out</a>
             <?php else: ?>
                 <a href="<?= e(url('login.php')) ?>">Sign in</a>
                 <a class="btn btn-primary" href="<?= e(url('register.php')) ?>">Get started</a>
             <?php endif; ?>
+            <button type="button" id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
         </nav>
     </div>
 </header>
@@ -55,5 +68,18 @@ $uid     = current_user_id();
         <p>&copy; <?= date('Y') ?> <?= e($appName) ?>. Built with QRaft.</p>
     </div>
 </footer>
+
+<script>
+    // Dark-mode toggle, remembered per browser.
+    (function () {
+        var btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', cur);
+            try { localStorage.setItem('qraft-theme', cur); } catch (e) {}
+        });
+    })();
+</script>
 </body>
 </html>

@@ -41,15 +41,19 @@ try {
     $salt = (string) config('base_url');
     $ipHash = $ip !== '' ? hash('sha256', $salt . '|' . $ip) : null;
 
+    $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    [$device, $os, $browser] = parse_user_agent($ua);
+
     $ins = $pdo->prepare(
-        'INSERT INTO qr_scans (qr_id, ip_hash, user_agent, referer)
-         VALUES (?, ?, ?, ?)'
+        'INSERT INTO qr_scans (qr_id, ip_hash, user_agent, referer, device, os, browser)
+         VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
     $ins->execute([
         $qr['id'],
         $ipHash,
-        mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+        mb_substr($ua, 0, 255),
         mb_substr((string) ($_SERVER['HTTP_REFERER'] ?? ''), 0, 255),
+        $device, $os, $browser,
     ]);
 
     $pdo->prepare('UPDATE qr_codes SET scan_count = scan_count + 1 WHERE id = ?')

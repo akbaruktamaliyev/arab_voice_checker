@@ -19,16 +19,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string) ($_POST['email'] ?? ''));
     $pass  = (string) ($_POST['password'] ?? '');
 
-    $stmt = $pdo->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+    $stmt = $pdo->prepare('SELECT id, password_hash, is_blocked FROM users WHERE email = ?');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($pass, $user['password_hash'])) {
-        login_user((int) $user['id']);
-        redirect('dashboard.php');
+        if ((int) $user['is_blocked'] === 1) {
+            $error = 'Your account has been suspended.';
+        } else {
+            login_user((int) $user['id']);
+            redirect('dashboard.php');
+        }
+    } else {
+        // Same message whether the email or the password was wrong.
+        $error = 'Invalid email or password.';
     }
-    // Same message whether the email or the password was wrong.
-    $error = 'Invalid email or password.';
 }
 
 $title = 'Sign in';

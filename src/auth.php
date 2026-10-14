@@ -18,18 +18,43 @@ function current_user(PDO $pdo): ?array
     if ($id === null) {
         return null;
     }
-    $stmt = $pdo->prepare('SELECT id, name, email, created_at FROM users WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, email, role, is_blocked, created_at FROM users WHERE id = ?');
     $stmt->execute([$id]);
     $user = $stmt->fetch();
     return $user ?: null;
 }
 
-/** Stop and send guests to the login page. */
+/** Stop and send guests to the login page. A blocked account is logged out. */
 function require_login(): void
 {
+    global $pdo;
     if (current_user_id() === null) {
         flash('Please sign in to continue.', 'info');
         redirect('login.php');
+    }
+    $user = current_user($pdo);
+    if ($user && (int) $user['is_blocked'] === 1) {
+        logout_user();
+        flash('Your account has been suspended.', 'error');
+        redirect('login.php');
+    }
+}
+
+/** Is the current user an administrator? */
+function is_admin(PDO $pdo): bool
+{
+    $user = current_user($pdo);
+    return $user !== null && $user['role'] === 'admin';
+}
+
+/** Stop unless the current user is an administrator. */
+function require_admin(PDO $pdo): void
+{
+    require_login();
+    if (!is_admin($pdo)) {
+        http_response_code(403);
+        flash('Administrator access required.', 'error');
+        redirect('dashboard.php');
     }
 }
 

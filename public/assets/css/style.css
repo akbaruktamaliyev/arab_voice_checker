@@ -17,6 +17,41 @@
     --shadow: 0 1px 3px rgba(20, 30, 60, .08), 0 8px 24px rgba(20, 30, 60, .06);
 }
 
+/* Dark theme — opt-in via <html data-theme="dark"> (toggle in the header),
+   and also the default when the OS prefers dark and no choice was saved. */
+:root[data-theme="dark"] {
+    --bg: #0f1420;
+    --surface: #171d2b;
+    --border: #2a3346;
+    --text: #e7ecf5;
+    --muted: #93a0b8;
+    --primary: #6d64f0;
+    --primary-dark: #5a51dd;
+    --primary-soft: #232a46;
+    --success: #34d399;
+    --success-soft: #16301f;
+    --danger: #f87171;
+    --danger-soft: #3a1d1d;
+    --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #0f1420;
+        --surface: #171d2b;
+        --border: #2a3346;
+        --text: #e7ecf5;
+        --muted: #93a0b8;
+        --primary: #6d64f0;
+        --primary-dark: #5a51dd;
+        --primary-soft: #232a46;
+        --success: #34d399;
+        --success-soft: #16301f;
+        --danger: #f87171;
+        --danger-soft: #3a1d1d;
+        --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -52,6 +87,11 @@ a:hover { text-decoration: underline; }
 .nav { display: flex; align-items: center; gap: 18px; }
 .nav a { color: var(--muted); font-weight: 500; }
 .nav a:hover { color: var(--text); text-decoration: none; }
+.theme-toggle {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 1rem; line-height: 1;
+}
+.theme-toggle:hover { color: var(--text); background: var(--bg); }
 
 /* Buttons ------------------------------------------------------------- */
 .btn {

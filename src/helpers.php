@@ -11,11 +11,65 @@ function e(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** Read the app config (loaded once in bootstrap). */
+/** Read the app config from config.php (loaded once in bootstrap). */
 function config(string $key, mixed $default = null): mixed
 {
     global $config;
     return $config[$key] ?? $default;
+}
+
+/** Read an admin-configurable setting (from the settings table). */
+function setting(string $name, ?string $default = null): ?string
+{
+    $s = $GLOBALS['settings'] ?? [];
+    return array_key_exists($name, $s) ? $s[$name] : $default;
+}
+
+/** Persist a setting and update the in-memory copy. */
+function set_setting(PDO $pdo, string $name, string $value): void
+{
+    $stmt = $pdo->prepare(
+        'INSERT INTO settings (name, value) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE value = VALUES(value)'
+    );
+    $stmt->execute([$name, $value]);
+    $GLOBALS['settings'][$name] = $value;
+}
+
+/** App display name: admin setting first, then config, then a default. */
+function app_name(): string
+{
+    return setting('app_name') ?: (string) config('app_name', 'QRaft');
+}
+
+/**
+ * Best-effort device / OS / browser from a User-Agent string, for analytics.
+ * Returns [device, os, browser] with short labels (no external library).
+ */
+function parse_user_agent(string $ua): array
+{
+    $ua = $ua ?: '';
+    $device = preg_match('/Mobi|Android|iPhone|iPod/i', $ua) ? 'Mobile'
+            : (preg_match('/iPad|Tablet/i', $ua) ? 'Tablet' : 'Desktop');
+
+    $os = 'Other';
+    foreach ([
+        'Windows' => '/Windows NT/i', 'Android' => '/Android/i',
+        'iOS' => '/iPhone|iPad|iPod/i', 'macOS' => '/Mac OS X/i',
+        'Linux' => '/Linux/i',
+    ] as $label => $re) {
+        if (preg_match($re, $ua)) { $os = $label; break; }
+    }
+
+    $browser = 'Other';
+    foreach ([
+        'Edge' => '/Edg/i', 'Opera' => '/OPR|Opera/i', 'Chrome' => '/Chrome|CriOS/i',
+        'Firefox' => '/Firefox|FxiOS/i', 'Safari' => '/Safari/i',
+    ] as $label => $re) {
+        if (preg_match($re, $ua)) { $browser = $label; break; }
+    }
+
+    return [$device, $os, $browser];
 }
 
 /** Build an absolute URL from the configured base_url. */
@@ -35,7 +89,19 @@ function url(string $path = ''): string
  */
 function redirect(string $path): never
 {
-    header('Location: ' . $path);
+    if (str_starts_with($path, 'http')) {
+        header('Location: ' . $path);
+        exit;
+    }
+    // Root-relative to the app's base path (from base_url's path component),
+    // so it works from any sub-directory (e.g. /admin/) and from a sub-folder
+    // install, while staying on the host the visitor is actually using.
+    $basePath = (string) (parse_url((string) config('base_url'), PHP_URL_PATH) ?? '');
+    $basePath = '/' . trim($basePath, '/');
+    if ($basePath !== '/') {
+        $basePath .= '/';
+    }
+    header('Location: ' . $basePath . ltrim($path, '/'));
     exit;
 }
 

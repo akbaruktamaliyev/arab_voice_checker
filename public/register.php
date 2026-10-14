@@ -10,6 +10,23 @@ if (current_user_id() !== null) {
     redirect('dashboard.php');
 }
 
+// Registration can be switched off by the administrator.
+if (setting('allow_registration', '1') !== '1') {
+    $title = 'Registration closed';
+    ob_start(); ?>
+    <section class="section" style="max-width:440px;margin-inline:auto">
+        <div class="card center stack">
+            <h1 style="margin:0">Registration is closed</h1>
+            <p class="muted">New sign-ups are currently disabled. Please check back later.</p>
+            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>">Back to sign in</a>
+        </div>
+    </section>
+    <?php
+    $content = ob_get_clean();
+    require __DIR__ . '/../src/layout.php';
+    exit;
+}
+
 $errors = [];
 $name = $email = '';
 
@@ -45,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
             login_user((int) $pdo->lastInsertId());
-            flash('Welcome to ' . config('app_name') . '! Your account is ready.', 'success');
+            flash('Welcome to ' . app_name() . '! Your account is ready.', 'success');
             redirect('dashboard.php');
         } catch (PDOException $e) {
             // Safety net for the check-then-insert race: the unique index on

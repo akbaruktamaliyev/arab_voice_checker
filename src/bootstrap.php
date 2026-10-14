@@ -15,6 +15,11 @@ define('APP_ROOT', dirname(__DIR__));
 
 $configFile = APP_ROOT . '/config.php';
 if (!is_file($configFile)) {
+    // Not installed yet → send the visitor to the web installer.
+    if (is_dir(APP_ROOT . '/public/install')) {
+        header('Location: install/');
+        exit;
+    }
     http_response_code(500);
     exit('Configuration missing. Copy config.example.php to config.php and fill it in.');
 }
@@ -42,6 +47,17 @@ try {
     http_response_code(500);
     exit('Database connection failed. Check your settings in config.php.');
 }
+
+// --- Admin-configurable settings (loaded once from the DB) ------------
+$settings = [];
+try {
+    foreach ($pdo->query('SELECT name, value FROM settings') as $row) {
+        $settings[$row['name']] = $row['value'];
+    }
+} catch (PDOException $e) {
+    // settings table not present yet (pre-migration) — fall back to config
+}
+$GLOBALS['settings'] = $settings;
 
 // --- Session ----------------------------------------------------------
 session_set_cookie_params([
