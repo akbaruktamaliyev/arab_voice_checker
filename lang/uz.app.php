@@ -400,6 +400,8 @@ return [
     'b.missing' => 'Bunday sahifa mavjud emas.',
     'bio.pub_none' => 'Hozircha havolalar yo‘q.',
     'bio.made_with' => '%s da yaratilgan',
+    'verify.resend' => 'Tasdiqlash xatini qayta yuborish',
+    'verify.resent' => 'Agar bunday akkaunt mavjud va hali tasdiqlanmagan bo‘lsa, yangi tasdiqlash havolasi yuborildi.',
     'view.saved' => 'O‘zgarishlar saqlandi.',
     'view.status_updated' => 'Holat yangilandi.',
     'view.edit' => 'Tahrirlash',

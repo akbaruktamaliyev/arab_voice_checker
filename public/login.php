@@ -12,6 +12,7 @@ if (current_user_id() !== null) {
 
 $error = null;
 $email = '';
+$canResend = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -33,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = t('auth.suspended');
             } elseif (setting('require_email_verification', '0') === '1' && (int) $user['is_verified'] === 0) {
                 $error = t('auth.verify_first');
+                $canResend = true;
             } else {
                 login_succeeded($pdo);
                 login_user((int) $user['id']);
@@ -54,6 +56,13 @@ ob_start();
         <h1 style="margin:0"><?= e(t('auth.welcome_back')) ?></h1>
         <?php if ($error): ?>
             <div class="flash flash-error"><?= e($error) ?></div>
+        <?php endif; ?>
+        <?php if ($canResend): ?>
+            <form method="post" action="<?= e(url('resend-verification.php')) ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="email" value="<?= e($email) ?>">
+                <button type="submit" class="btn btn-ghost btn-block"><?= e(t('verify.resend')) ?></button>
+            </form>
         <?php endif; ?>
         <form method="post" class="stack">
             <?= csrf_field() ?>

@@ -63,19 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         try {
             $mustVerify = setting('require_email_verification', '0') === '1' && mail_enabled();
-            $verifyToken = $mustVerify ? bin2hex(random_bytes(32)) : null;
 
             $stmt = $pdo->prepare(
-                'INSERT INTO users (name, email, password_hash, is_verified, verify_token) VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO users (name, email, password_hash, is_verified) VALUES (?, ?, ?, ?)'
             );
-            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT), $mustVerify ? 0 : 1, $verifyToken !== null ? hash('sha256', $verifyToken) : null]);
+            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT), $mustVerify ? 0 : 1]);
             $newId = (int) $pdo->lastInsertId();
 
             if ($mustVerify) {
-                $link = url('verify.php?token=' . $verifyToken);
-                $okMail = send_mail($email, t('mail.verify_subject', app_name()),
-                    '<p>' . e(t('mail.verify_body', app_name())) . '</p>'
-                    . '<p><a href="' . e($link) . '">' . e($link) . '</a></p>');
+                $okMail = send_verification_mail($pdo, $newId, $email);
                 if ($okMail) {
                     flash(t('reg.check_mail'), 'success');
                     redirect('login.php');

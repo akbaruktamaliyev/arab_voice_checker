@@ -21,6 +21,9 @@ const QRPW_WINDOW_MINUTES = 15;
 /** Password-reset requests per visitor (and per target address) per hour. */
 const FORGOT_MAX_PER_IP = 6;
 const FORGOT_MAX_PER_EMAIL = 3;
+/** Confirmation-mail resends per visitor / per address per hour. */
+const VERIFY_RESEND_MAX_PER_IP = 6;
+const VERIFY_RESEND_MAX_PER_EMAIL = 3;
 /** Registration attempts per visitor per hour. */
 const REGISTER_MAX_PER_HOUR = 10;
 /** API requests per token per minute, and failed token attempts per visitor. */

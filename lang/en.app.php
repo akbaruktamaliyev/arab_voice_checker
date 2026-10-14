@@ -400,6 +400,8 @@ return [
     'b.missing' => 'This page does not exist.',
     'bio.pub_none' => 'No links yet.',
     'bio.made_with' => 'Made with %s',
+    'verify.resend' => 'Resend confirmation email',
+    'verify.resent' => 'If that account exists and is not confirmed yet, a new confirmation link is on its way.',
     'view.saved' => 'Changes saved.',
     'view.status_updated' => 'Status updated.',
     'view.edit' => 'Edit',

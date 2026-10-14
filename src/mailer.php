@@ -10,6 +10,20 @@
 
 declare(strict_types=1);
 
+/**
+ * Issue a fresh confirmation token for a user and e-mail the link.
+ * Returns true when the mail was handed to the SMTP server.
+ */
+function send_verification_mail(PDO $pdo, int $userId, string $email): bool
+{
+    $token = bin2hex(random_bytes(32));
+    $pdo->prepare('UPDATE users SET verify_token = ? WHERE id = ?')->execute([hash('sha256', $token), $userId]);
+    $link = url('verify.php?token=' . $token);
+    return send_mail($email, t('mail.verify_subject', app_name()),
+        '<p>' . e(t('mail.verify_body', app_name())) . '</p>'
+        . '<p><a href="' . e($link) . '">' . e($link) . '</a></p>');
+}
+
 /** Is outgoing email configured? */
 function mail_enabled(): bool
 {
