@@ -92,7 +92,8 @@ config.example.php   Configuration template
 database.sql         Schema (users, qr_codes, qr_scans)
 src/                 Bootstrap, DB, auth, CSRF, helpers, layout
 public/              Web root — pages, redirect endpoint, assets
-docs/                Installation guide
+docs/                Installation guide, API and payments docs
+tests/               End-to-end test suite (php tests/run.php)
 lang/                Translations (en, ru, uz)
 ```
 
@@ -116,11 +117,10 @@ The installer has its own small string table at the top of `public/install/index
 
 ## Credits
 
-QR rendering in the browser uses **qrcode-generator** by Kazuhiko Arase (MIT),
-bundled in
-`public/assets/js/qrcode-generator.min.js`. Everything else is original.
+Third-party libraries bundled in `public/assets/js/` (all MIT): **qr-code-styling**, **qrcode-generator**
+and **jsPDF** — see [THIRD-PARTY.md](THIRD-PARTY.md). Everything else is original.
 
 ## License
 
-Sold under the Envato Market license you purchased (Regular or Extended). See
-your purchase for details.
+Sold under the Envato Market license you purchased (Regular or Extended) — see
+[LICENSE.txt](LICENSE.txt). Release notes are in [CHANGELOG.md](CHANGELOG.md).

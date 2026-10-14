@@ -1,0 +1,18 @@
+QRaft — QR Code Generator & Dynamic QR SaaS
+Copyright (c) 2026 Uktamaliev Akbar. All rights reserved.
+
+This software is sold through Envato Market (CodeCanyon) and is licensed to
+you under the Envato Market licence you purchased — the Regular Licence or the
+Extended Licence:
+
+    https://codecanyon.net/licenses/standard
+
+In short (the licence text above is what counts):
+  * Regular Licence  — one end product, free for you or one client.
+  * Extended Licence — one end product that you (or your client) charge
+                       end users for (a paid SaaS).
+  * You may not redistribute or resell the source code itself, alone or as part
+    of a template, theme or code library.
+
+Third-party components bundled with the product keep their own licences; see
+THIRD-PARTY.md.
