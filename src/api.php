@@ -5,12 +5,29 @@
 
 declare(strict_types=1);
 
+/**
+ * Human-readable field names in the response language, for building UIs.
+ * Opt-in with ?labels=1; the JSON keys themselves never change.
+ */
+function api_labels(): array
+{
+    $out = [];
+    foreach (['id', 'code', 'codes', 'title', 'target_url', 'short_url', 'slug', 'fg_color', 'bg_color',
+              'is_active', 'scan_count', 'created_at', 'deleted'] as $k) {
+        $out[$k] = t('apilabel.' . $k);
+    }
+    return $out;
+}
+
 /** Send a JSON response and stop. */
 function json_out(mixed $data, int $status = 200): never
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=UTF-8');
     header('Content-Language: ' . ($GLOBALS['lang_code'] ?? 'en'));
+    if ($status < 400 && is_array($data) && in_array($_GET['labels'] ?? '', ['1', 'true'], true)) {
+        $data['labels'] = api_labels();
+    }
     echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }

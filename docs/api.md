@@ -73,6 +73,23 @@ Messages come back in English, Russian or Uzbek. Pick one with `?lang=en|ru|uz`,
 an `Accept-Language` header; otherwise the site's default language is used. The response
 carries a `Content-Language` header with the language used.
 
+### Field labels
+
+JSON keys are a fixed contract and never change with the language. If you are building a
+UI and want display names for the fields, add `?labels=1` to any successful request — the
+response gains a `labels` object in the response language:
+
+```bash
+curl "https://your-site/api/codes.php?id=42&labels=1&lang=ru" -H "Authorization: Bearer $TOKEN"
+```
+```json
+{ "code": { "id": 42, "title": "Promo", "scan_count": 7, "...": "..." },
+  "labels": { "title": "Название", "target_url": "Адрес назначения", "scan_count": "Сканы", "...": "..." } }
+```
+
+Read the data by the English key, render the caption from `labels[key]`. Error responses
+never include `labels`.
+
 ## Example
 
 ```bash
