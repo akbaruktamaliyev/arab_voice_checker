@@ -177,7 +177,7 @@ function url(string $path = ''): string
  * domain behind a proxy) and the session cookie keeps working. base_url is only
  * for QR content, not for navigation. Absolute http(s) targets pass through.
  */
-function redirect(string $path): never
+function redirect(string $path)
 {
     if (str_starts_with($path, 'http')) {
         header('Location: ' . $path);
@@ -379,7 +379,7 @@ function code_status(array $c): array
  * public endpoints visitors see directly: scanned QR codes and bio pages.
  * Follows the visitor's light/dark preference.
  */
-function standalone_page(string $title, string $body, int $status = 200): never
+function standalone_page(string $title, string $body, int $status = 200)
 {
     http_response_code($status);
     echo '<!DOCTYPE html><html lang="' . e($GLOBALS['lang_code'] ?? 'en') . '"><head><meta charset="utf-8">'

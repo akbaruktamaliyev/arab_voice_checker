@@ -8,6 +8,9 @@
  */
 
 declare(strict_types=1);
+if (PHP_VERSION_ID < 80000) {
+    exit('QRaft requires PHP 8.0 or newer. This server runs PHP ' . PHP_VERSION . '.');
+}
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
@@ -114,6 +117,9 @@ $IT = [
         'e_pass' => 'Admin password must be at least 8 characters.',
         'e_schema' => 'database.sql is missing from the project root.', 'e_dbname' => 'Enter a valid database name.',
         'e_config' => 'Could not write config.php. Make the project root writable and retry.', 'e_db' => 'Database error: ',
+        'h_req' => 'Server requirements', 'rq_php' => 'PHP 8.0 or newer (this server: %s)', 'rq_ext' => 'PHP extension: %s',
+        'rq_root' => 'Project folder is writable (to create config.php)', 'rq_logos' => 'public/uploads/logos is writable (logo uploads)',
+        'rq_curl' => 'PHP extension: curl (needed only for Stripe payments)', 'rq_blocked' => 'Fix the items marked ✗ and reload this page — the installer cannot continue until they pass.',
     ],
     'ru' => [
         'title' => 'Установка QRaft', 'installed' => 'QRaft уже установлен.',
@@ -128,6 +134,9 @@ $IT = [
         'e_pass' => 'Пароль администратора должен содержать не менее 8 символов.',
         'e_schema' => 'Файл database.sql отсутствует в корне проекта.', 'e_dbname' => 'Введите корректное имя базы данных.',
         'e_config' => 'Не удалось записать config.php. Сделайте корневую папку проекта доступной для записи и повторите.', 'e_db' => 'Ошибка базы данных: ',
+        'h_req' => 'Требования к серверу', 'rq_php' => 'PHP 8.0 или новее (на этом сервере: %s)', 'rq_ext' => 'Расширение PHP: %s',
+        'rq_root' => 'Папка проекта доступна для записи (чтобы создать config.php)', 'rq_logos' => 'public/uploads/logos доступна для записи (загрузка логотипов)',
+        'rq_curl' => 'Расширение PHP: curl (нужно только для платежей Stripe)', 'rq_blocked' => 'Исправьте пункты с ✗ и обновите страницу — пока они не выполнены, установка невозможна.',
     ],
     'uz' => [
         'title' => 'QRaft ni o‘rnatish', 'installed' => 'QRaft allaqachon o‘rnatilgan.',
@@ -142,6 +151,9 @@ $IT = [
         'e_pass' => 'Administrator paroli kamida 8 belgidan iborat bo‘lishi kerak.',
         'e_schema' => 'database.sql fayli loyiha ildizida topilmadi.', 'e_dbname' => 'Ma’lumotlar bazasining to‘g‘ri nomini kiriting.',
         'e_config' => 'config.php ni yozib bo‘lmadi. Loyiha ildiz papkasini yozish uchun ochib, qayta urinib ko‘ring.', 'e_db' => 'Ma’lumotlar bazasi xatosi: ',
+        'h_req' => 'Server talablari', 'rq_php' => 'PHP 8.0 yoki yangiroq (bu serverda: %s)', 'rq_ext' => 'PHP kengaytmasi: %s',
+        'rq_root' => 'Loyiha papkasi yozish uchun ochiq (config.php yaratish uchun)', 'rq_logos' => 'public/uploads/logos yozish uchun ochiq (logotip yuklash)',
+        'rq_curl' => 'PHP kengaytmasi: curl (faqat Stripe to‘lovlari uchun kerak)', 'rq_blocked' => '✗ bilan belgilangan bandlarni tuzating va sahifani yangilang — ular bajarilmaguncha o‘rnatish mumkin emas.',
     ],
 ];
 /** Installer string in the chosen language (falls back to English). */
@@ -149,6 +161,22 @@ function it(string $key): string
 {
     global $IT, $ilang;
     return $IT[$ilang][$key] ?? $IT['en'][$key] ?? $key;
+}
+
+// --- Server requirements ---------------------------------------------------
+// [label, ok, hard]: a failed hard check stops the installer.
+$checks = [
+    [sprintf(it('rq_php'), PHP_VERSION), PHP_VERSION_ID >= 80000, true],
+];
+foreach (['pdo_mysql', 'mbstring', 'json', 'session', 'ctype'] as $ext) {
+    $checks[] = [sprintf(it('rq_ext'), $ext), extension_loaded($ext), true];
+}
+$checks[] = [it('rq_root'), is_writable($root), true];
+$checks[] = [it('rq_logos'), is_dir($root . '/public/uploads/logos') && is_writable($root . '/public/uploads/logos'), false];
+$checks[] = [it('rq_curl'), extension_loaded('curl'), false];
+$blocked = false;
+foreach ($checks as $c) {
+    if (!$c[1] && $c[2]) { $blocked = true; }
 }
 
 $done = false;
@@ -173,7 +201,7 @@ $in = [
     'admin_pass' => $_POST['admin_pass'] ?? '',
 ];
 
-if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if (!$alreadyInstalled && !$blocked && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate.
     if (trim($in['admin_name']) === '') { $errors[] = it('e_name'); }
     if (!filter_var($in['admin_email'], FILTER_VALIDATE_EMAIL)) { $errors[] = it('e_email'); }
@@ -263,6 +291,8 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
         .ok{background:#e6f6ee;color:#0f9d58;padding:12px 16px;border-radius:10px}
         code{background:#f4f6fb;padding:2px 6px;border-radius:6px}
         h2{font-size:1rem;margin:22px 0 0}
+        .req{list-style:none;padding:0;margin:8px 0 0;font-size:.9rem}.req li{padding:2px 0}
+        .req .y{color:#0f9d58}.req .n{color:#d64545;font-weight:600}.req .w{color:#b7791f}
         .langs{float:right;font-size:.85rem}.langs a{color:#6b7691;text-decoration:none;margin-left:8px}.langs a.on{color:#4f46e5;font-weight:700}
     </style>
 </head>
@@ -280,7 +310,15 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
         <a class="btn" href="../login.php" style="text-align:center;text-decoration:none"><?= htmlspecialchars(it('to_login')) ?></a>
     <?php else: ?>
         <p class="muted"><?= htmlspecialchars(it('intro')) ?></p>
+        <h2><?= htmlspecialchars(it('h_req')) ?></h2>
+        <ul class="req">
+            <?php foreach ($checks as [$label, $ok, $hard]): ?>
+                <li class="<?= $ok ? 'y' : ($hard ? 'n' : 'w') ?>"><?= $ok ? '✓' : ($hard ? '✗' : '!') ?> <?= htmlspecialchars($label) ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <?php if ($blocked): ?><div class="err"><?= htmlspecialchars(it('rq_blocked')) ?></div><?php endif; ?>
         <?php foreach ($errors as $err): ?><div class="err"><?= htmlspecialchars($err) ?></div><?php endforeach; ?>
+        <?php if (!$blocked): ?>
         <form method="post">
             <input type="hidden" name="lang" value="<?= $ilang ?>">
             <h2><?= htmlspecialchars(it('h_db')) ?></h2>
@@ -318,6 +356,7 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button class="btn" type="submit"><?= htmlspecialchars(it('install')) ?></button>
         </form>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 </body>

@@ -62,7 +62,9 @@ host and it runs.
 
 ## Requirements
 
-- PHP 8.0 or newer (PDO + pdo_mysql enabled — standard in Laragon/XAMPP)
+- PHP 8.0 or newer with the `pdo_mysql`, `mbstring`, `json`, `session` and `ctype` extensions
+  (all standard in Laragon/XAMPP); `curl` is needed only for Stripe payments. The web
+  installer checks all of this for you before it does anything
 - MySQL 5.7+ or MariaDB 10.3+
 - Apache with mod_rewrite, or nginx (one rewrite rule — see docs)
 

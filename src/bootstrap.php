@@ -8,6 +8,13 @@
 
 declare(strict_types=1);
 
+// Checked before anything newer is loaded, so an old server gets a clear message
+// instead of a blank page.
+if (PHP_VERSION_ID < 80000) {
+    http_response_code(500);
+    exit('QRaft requires PHP 8.0 or newer. This server runs PHP ' . PHP_VERSION . '.');
+}
+
 error_reporting(E_ALL);
 ini_set('display_errors', '0'); // never leak stack traces to buyers' visitors
 

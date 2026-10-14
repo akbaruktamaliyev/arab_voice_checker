@@ -78,7 +78,7 @@ framework-heavy competitors.
 
 ## Requirements
 
-- PHP 8.0+ (PDO, pdo_mysql, GD; cURL for Stripe payments)
+- PHP 8.0+ (pdo_mysql, mbstring, json, session, ctype; cURL for Stripe payments)
 - MySQL 5.7+ / MariaDB 10.3+
 - Apache with mod_rewrite, or nginx (one rewrite rule)
 

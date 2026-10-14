@@ -20,7 +20,7 @@ function api_labels(): array
 }
 
 /** Send a JSON response and stop. */
-function json_out(mixed $data, int $status = 200): never
+function json_out(mixed $data, int $status = 200)
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=UTF-8');
@@ -58,13 +58,13 @@ function api_pick_language(): void
  * Send a localized JSON error: {"error": "<message>", "error_code": "<stable id>"}.
  * Clients should branch on error_code; the message text depends on the language.
  */
-function api_error(string $code, int $status): never
+function api_error(string $code, int $status)
 {
     json_out(['error' => t('api.' . $code), 'error_code' => $code], $status);
 }
 
 /** 429 with a Retry-After header. */
-function api_rate_limited(int $retryAfter): never
+function api_rate_limited(int $retryAfter)
 {
     header('Retry-After: ' . $retryAfter);
     api_error('rate_limited', 429);

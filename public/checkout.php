@@ -19,7 +19,8 @@ $stmt = $pdo->prepare('SELECT * FROM plans WHERE id = ? AND is_active = 1');
 $stmt->execute([$pid]);
 $plan = $stmt->fetch();
 
-function checkout_message(string $heading, string $body): never
+/** Show a message page and stop (never returns). */
+function checkout_message(string $heading, string $body)
 {
     global $pdo, $title;
     $title = t('co.title');
