@@ -15,7 +15,7 @@ $code = preg_replace('/[^A-Za-z0-9_-]/', '', $code);
 
 if ($code === '') {
     http_response_code(404);
-    exit('QR code not found.');
+    exit(t('q.nf_title'));
 }
 
 $stmt = $pdo->prepare(
@@ -26,16 +26,16 @@ $stmt->execute([$code]);
 $qr = $stmt->fetch();
 
 if (!$qr) {
-    standalone_page('Not found', '<h1>QR code not found</h1><p class="m">This code does not exist.</p>', 404);
+    standalone_page(t('q.nf_page'), '<h1>' . e(t('q.nf_title')) . '</h1><p class="m">' . e(t('q.nf_text')) . '</p>', 404);
 }
 if (!$qr['is_active']) {
-    standalone_page('Paused', '<h1>Temporarily unavailable</h1><p class="m">This QR code is paused.</p>', 410);
+    standalone_page(t('q.paused_page'), '<h1>' . e(t('q.paused_title')) . '</h1><p class="m">' . e(t('q.paused_text')) . '</p>', 410);
 }
 if ($qr['expires_at'] !== null && strtotime((string) $qr['expires_at']) < time()) {
-    standalone_page('Expired', '<h1>This QR code has expired</h1><p class="m">The link is no longer active.</p>', 410);
+    standalone_page(t('q.expired_page'), '<h1>' . e(t('q.expired_title')) . '</h1><p class="m">' . e(t('q.expired_text')) . '</p>', 410);
 }
 if ($qr['scan_limit'] !== null && (int) $qr['scan_count'] >= (int) $qr['scan_limit']) {
-    standalone_page('Limit reached', '<h1>Scan limit reached</h1><p class="m">This QR code is no longer available.</p>', 410);
+    standalone_page(t('limit.page_title'), '<h1>' . e(t('q.limit_title')) . '</h1><p class="m">' . e(t('q.limit_text')) . '</p>', 410);
 }
 
 // Password gate: show a prompt and only continue on the correct password.
@@ -43,11 +43,11 @@ if ($qr['password_hash'] !== null && $qr['password_hash'] !== '') {
     $given = (string) ($_POST['password'] ?? '');
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !password_verify($given, $qr['password_hash'])) {
         $wrong = $_SERVER['REQUEST_METHOD'] === 'POST'
-            ? '<p class="m" style="color:#d64545">Incorrect password.</p>' : '';
-        standalone_page('Protected',
-            '<h1>Password required</h1><p class="m">Enter the password to continue.</p>' . $wrong
-            . '<form method="post"><input type="password" name="password" autofocus placeholder="Password">'
-            . '<button type="submit">Continue</button></form>');
+            ? '<p class="m" style="color:#d64545">' . e(t('q.wrong_pw')) . '</p>' : '';
+        standalone_page(t('q.protected_page'),
+            '<h1>' . e(t('q.pw_title')) . '</h1><p class="m">' . e(t('q.pw_text')) . '</p>' . $wrong
+            . '<form method="post"><input type="password" name="password" autofocus placeholder="' . e(t('form.password')) . '">'
+            . '<button type="submit">' . e(t('q.continue')) . '</button></form>');
     }
 }
 

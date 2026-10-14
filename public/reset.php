@@ -27,16 +27,16 @@ if ($user && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $pass = (string) ($_POST['password'] ?? '');
     if (strlen($pass) < 8) {
-        $errors[] = 'Password must be at least 8 characters.';
+        $errors[] = t('err.pw_short');
     } else {
         $pdo->prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?')
             ->execute([password_hash($pass, PASSWORD_DEFAULT), $user['id']]);
-        flash('Password updated — please sign in.', 'success');
+        flash(t('reset.done'), 'success');
         redirect('login.php');
     }
 }
 
-$title = 'Set a new password';
+$title = t('reset.title');
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

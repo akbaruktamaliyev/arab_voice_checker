@@ -51,63 +51,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dl = in_array($_POST['default_lang'] ?? 'en', $GLOBALS['available_langs'] ?? ['en'], true) ? $_POST['default_lang'] : 'en';
     set_setting($pdo, 'default_lang', $dl);
 
-    flash('Settings saved.', 'success');
+    flash(t('adm.saved'), 'success');
     redirect('admin/settings.php');
 }
 
-$title = 'Settings';
+$title = t('adm.settings');
 ob_start();
 ?>
 <div class="section-head">
-    <h1 style="margin:0">Settings</h1>
-    <a href="<?= e(url('admin/index.php')) ?>">← Admin</a>
+    <h1 style="margin:0"><?= e(t('adm.settings')) ?></h1>
+    <a href="<?= e(url('admin/index.php')) ?>"><?= e(t('adm.back')) ?></a>
 </div>
 
 <form method="post" class="stack" style="max-width:620px">
     <?= csrf_field() ?>
 
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem">General</h2>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('adm.general')) ?></h2>
         <div class="field">
-            <label for="app_name">Site name</label>
+            <label for="app_name"><?= e(t('adm.site_name')) ?></label>
             <input type="text" id="app_name" name="app_name" value="<?= e(setting('app_name', 'QRaft')) ?>" required>
         </div>
         <div class="field">
-            <label for="timezone">Time zone</label>
+            <label for="timezone"><?= e(t('adm.timezone')) ?></label>
             <select id="timezone" name="timezone">
                 <?php foreach (DateTimeZone::listIdentifiers() as $z): ?>
                     <option value="<?= e($z) ?>" <?= date_default_timezone_get() === $z ? 'selected' : '' ?>><?= e($z) ?></option>
                 <?php endforeach; ?>
             </select>
-            <p class="muted" style="font-size:.8rem;margin:6px 0 0">Used for expiry dates, scan times and charts. Now: <?= e(date('Y-m-d H:i')) ?></p>
+            <p class="muted" style="font-size:.8rem;margin:6px 0 0"><?= e(t('adm.tz_help', date('Y-m-d H:i'))) ?></p>
         </div>
         <label style="font-weight:400"><input type="checkbox" name="allow_registration" style="width:auto"
-            <?= setting('allow_registration', '1') === '1' ? 'checked' : '' ?>> Allow new user registration</label>
+            <?= setting('allow_registration', '1') === '1' ? 'checked' : '' ?>> <?= e(t('adm.allow_reg')) ?></label>
         <label style="font-weight:400"><input type="checkbox" name="require_email_verification" style="width:auto"
-            <?= setting('require_email_verification', '0') === '1' ? 'checked' : '' ?>> Require email verification to sign in</label>
+            <?= setting('require_email_verification', '0') === '1' ? 'checked' : '' ?>> <?= e(t('adm.req_verify')) ?></label>
     </div>
 
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem">Email (SMTP)</h2>
-        <p class="muted" style="margin:0">Used for password resets and verification. Leave blank to disable email.</p>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('adm.smtp')) ?></h2>
+        <p class="muted" style="margin:0"><?= e(t('adm.smtp_help')) ?></p>
         <div class="row">
-            <div class="field"><label for="smtp_host">SMTP host</label>
+            <div class="field"><label for="smtp_host"><?= e(t('adm.smtp_host')) ?></label>
                 <input type="text" id="smtp_host" name="smtp_host" value="<?= e(setting('smtp_host', '')) ?>" placeholder="smtp.example.com"></div>
-            <div class="field" style="max-width:120px"><label for="smtp_port">Port</label>
+            <div class="field" style="max-width:120px"><label for="smtp_port"><?= e(t('adm.smtp_port')) ?></label>
                 <input type="text" id="smtp_port" name="smtp_port" value="<?= e(setting('smtp_port', '587')) ?>"></div>
         </div>
         <div class="row">
-            <div class="field"><label for="smtp_user">Username</label>
+            <div class="field"><label for="smtp_user"><?= e(t('adm.smtp_user')) ?></label>
                 <input type="text" id="smtp_user" name="smtp_user" value="<?= e(setting('smtp_user', '')) ?>"></div>
-            <div class="field"><label for="smtp_pass">Password</label>
-                <input type="password" id="smtp_pass" name="smtp_pass" placeholder="<?= setting('smtp_pass') ? '•••••• (unchanged)' : '' ?>"></div>
+            <div class="field"><label for="smtp_pass"><?= e(t('form.password')) ?></label>
+                <input type="password" id="smtp_pass" name="smtp_pass" placeholder="<?= setting('smtp_pass') ? e(t('adm.unchanged')) : '' ?>"></div>
         </div>
         <div class="row">
-            <div class="field"><label for="smtp_from">From address</label>
+            <div class="field"><label for="smtp_from"><?= e(t('adm.smtp_from')) ?></label>
                 <input type="email" id="smtp_from" name="smtp_from" value="<?= e(setting('smtp_from', '')) ?>" placeholder="no-reply@example.com"></div>
-            <div class="field" style="max-width:140px"><label for="smtp_secure">Encryption</label>
+            <div class="field" style="max-width:140px"><label for="smtp_secure"><?= e(t('adm.smtp_secure')) ?></label>
                 <select id="smtp_secure" name="smtp_secure">
-                    <?php foreach (['tls' => 'TLS', 'ssl' => 'SSL', 'none' => 'None'] as $v => $l): ?>
+                    <?php foreach (['tls' => 'TLS', 'ssl' => 'SSL', 'none' => t('adm.none')] as $v => $l): ?>
                         <option value="<?= $v ?>" <?= setting('smtp_secure', 'tls') === $v ? 'selected' : '' ?>><?= $l ?></option>
                     <?php endforeach; ?>
                 </select></div>
@@ -115,32 +115,31 @@ ob_start();
     </div>
 
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem">Payments (Stripe)</h2>
-        <p class="muted" style="margin:0">Leave blank to disable paid plans. Webhook URL:
-           <code><?= e(url('api/stripe-webhook.php')) ?></code> (event <code>checkout.session.completed</code>).</p>
-        <div class="field"><label for="stripe_public">Publishable key</label>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('adm.pay')) ?></h2>
+        <p class="muted" style="margin:0"><?= t('adm.pay_help', '<code>' . e(url('api/stripe-webhook.php')) . '</code>', '<code>checkout.session.completed</code>') ?></p>
+        <div class="field"><label for="stripe_public"><?= e(t('adm.pk')) ?></label>
             <input type="text" id="stripe_public" name="stripe_public" value="<?= e(setting('stripe_public', '')) ?>" placeholder="pk_live_... / pk_test_..."></div>
-        <div class="field"><label for="stripe_secret">Secret key</label>
-            <input type="password" id="stripe_secret" name="stripe_secret" autocomplete="off" placeholder="<?= setting('stripe_secret') ? '•••••• saved — type to replace' : 'sk_live_... / sk_test_...' ?>"></div>
-        <div class="field"><label for="stripe_webhook_secret">Webhook signing secret</label>
-            <input type="password" id="stripe_webhook_secret" name="stripe_webhook_secret" autocomplete="off" placeholder="<?= setting('stripe_webhook_secret') ? '•••••• saved — type to replace' : 'whsec_...' ?>"></div>
+        <div class="field"><label for="stripe_secret"><?= e(t('adm.sk')) ?></label>
+            <input type="password" id="stripe_secret" name="stripe_secret" autocomplete="off" placeholder="<?= setting('stripe_secret') ? e(t('adm.saved_replace')) : 'sk_live_... / sk_test_...' ?>"></div>
+        <div class="field"><label for="stripe_webhook_secret"><?= e(t('adm.whsec')) ?></label>
+            <input type="password" id="stripe_webhook_secret" name="stripe_webhook_secret" autocomplete="off" placeholder="<?= setting('stripe_webhook_secret') ? e(t('adm.saved_replace')) : 'whsec_...' ?>"></div>
         <?php if (setting('stripe_secret') || setting('stripe_webhook_secret')): ?>
-            <label class="check"><input type="checkbox" name="stripe_clear" value="1"> Disconnect Stripe (remove saved secret keys)</label>
+            <label class="check"><input type="checkbox" name="stripe_clear" value="1"> <?= e(t('adm.disconnect')) ?></label>
         <?php endif; ?>
         <div class="row">
-            <div class="field" style="max-width:140px"><label for="currency">Currency</label>
+            <div class="field" style="max-width:140px"><label for="currency"><?= e(t('adm.currency')) ?></label>
                 <input type="text" id="currency" name="currency" value="<?= e(setting('currency', 'usd')) ?>" maxlength="3"></div>
-            <div class="field" style="max-width:160px"><label for="default_lang">Default language</label>
+            <div class="field" style="max-width:160px"><label for="default_lang"><?= e(t('adm.default_lang')) ?></label>
                 <select id="default_lang" name="default_lang">
                     <?php foreach (($GLOBALS['available_langs'] ?? ['en']) as $lc): ?>
                         <option value="<?= e($lc) ?>" <?= setting('default_lang', 'en') === $lc ? 'selected' : '' ?>><?= e(strtoupper($lc)) ?></option>
                     <?php endforeach; ?>
                 </select></div>
         </div>
-        <p class="muted" style="margin:0"><a href="<?= e(url('admin/plans.php')) ?>">Manage plans →</a></p>
+        <p class="muted" style="margin:0"><a href="<?= e(url('admin/plans.php')) ?>"><?= e(t('adm.manage_plans')) ?></a></p>
     </div>
 
-    <button type="submit" class="btn btn-primary">Save settings</button>
+    <button type="submit" class="btn btn-primary"><?= e(t('adm.save_settings')) ?></button>
 </form>
 <?php
 $content = ob_get_clean();

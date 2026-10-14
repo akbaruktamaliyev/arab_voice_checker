@@ -29,13 +29,13 @@ function require_login(): void
 {
     global $pdo;
     if (current_user_id() === null) {
-        flash('Please sign in to continue.', 'info');
+        flash(t('err.sign_in'), 'info');
         redirect('login.php');
     }
     $user = current_user($pdo);
     if ($user && (int) $user['is_blocked'] === 1) {
         logout_user();
-        flash('Your account has been suspended.', 'error');
+        flash(t('auth.suspended'), 'error');
         redirect('login.php');
     }
 }
@@ -53,7 +53,7 @@ function require_admin(PDO $pdo): void
     require_login();
     if (!is_admin($pdo)) {
         http_response_code(403);
-        flash('Administrator access required.', 'error');
+        flash(t('err.admin_only'), 'error');
         redirect('dashboard.php');
     }
 }
@@ -95,6 +95,6 @@ function csrf_check(): void
     $sent = $_POST['_csrf'] ?? '';
     if (!is_string($sent) || !hash_equals(csrf_token(), $sent)) {
         http_response_code(419);
-        exit('Session expired. Please go back and try again.');
+        exit(t('err.csrf'));
     }
 }

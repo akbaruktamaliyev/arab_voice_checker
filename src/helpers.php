@@ -18,6 +18,16 @@ function t(string $key, mixed ...$args): string
     return $args ? vsprintf($s, $args) : $s;
 }
 
+/**
+ * Translate admin-entered text stored in the database (e.g. plan names and
+ * feature lines). Only known default texts have a "dyn:<text>" key; anything
+ * the admin typed themselves is shown exactly as written.
+ */
+function td(string $text): string
+{
+    return $GLOBALS['lang']['dyn:' . $text] ?? $text;
+}
+
 /** Current language code (e.g. "en"). */
 function lang_code(): string
 {
@@ -71,7 +81,7 @@ function user_plan(PDO $pdo, int $uid): array
     $role = $pdo->prepare('SELECT role FROM users WHERE id = ?');
     $role->execute([$uid]);
     if ($role->fetchColumn() === 'admin') {
-        return ['id' => 0, 'name' => 'Admin', 'max_codes' => null, 'max_bios' => null, 'price' => 0, 'period' => 'lifetime'];
+        return ['id' => 0, 'name' => t('plan.admin'), 'max_codes' => null, 'max_bios' => null, 'price' => 0, 'period' => 'lifetime'];
     }
 
     $stmt = $pdo->prepare(
@@ -266,10 +276,10 @@ function store_logo(array $file): ?string
         return null;
     }
     if ($file['error'] !== UPLOAD_ERR_OK) {
-        throw new RuntimeException('The logo failed to upload. Please try again.');
+        throw new RuntimeException(t('err.logo_upload'));
     }
     if ($file['size'] > 1024 * 1024) {
-        throw new RuntimeException('The logo must be 1 MB or smaller.');
+        throw new RuntimeException(t('err.logo_size'));
     }
 
     $info = @getimagesize($file['tmp_name']);
@@ -279,13 +289,13 @@ function store_logo(array $file): ?string
         IMAGETYPE_WEBP => 'webp',
     ];
     if ($info === false || !isset($allowed[$info[2]])) {
-        throw new RuntimeException('Please upload a PNG, JPG or WebP image.');
+        throw new RuntimeException(t('err.logo_type'));
     }
 
     $name = bin2hex(random_bytes(16)) . '.' . $allowed[$info[2]];
     $dest = logo_dir() . '/' . $name;
     if (!move_uploaded_file($file['tmp_name'], $dest)) {
-        throw new RuntimeException('Could not save the logo. Check folder permissions.');
+        throw new RuntimeException(t('err.logo_save'));
     }
     return 'uploads/logos/' . $name;
 }
@@ -332,15 +342,15 @@ function clean_url(string $value): ?string
 function code_status(array $c): array
 {
     if (!$c['is_active']) {
-        return ['Paused', 'badge-off'];
+        return [t('status.paused'), 'badge-off'];
     }
     if ($c['expires_at'] !== null && strtotime((string) $c['expires_at']) < time()) {
-        return ['Expired', 'badge-warn'];
+        return [t('status.expired'), 'badge-warn'];
     }
     if ($c['scan_limit'] !== null && (int) $c['scan_count'] >= (int) $c['scan_limit']) {
-        return ['Limit reached', 'badge-warn'];
+        return [t('status.limit'), 'badge-warn'];
     }
-    return ['Active', 'badge-on'];
+    return [t('status.active'), 'badge-on'];
 }
 
 /**
@@ -351,7 +361,7 @@ function code_status(array $c): array
 function standalone_page(string $title, string $body, int $status = 200): never
 {
     http_response_code($status);
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+    echo '<!DOCTYPE html><html lang="' . e($GLOBALS['lang_code'] ?? 'en') . '"><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark">'
         . '<title>' . e($title) . '</title><style>'
         . ':root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f0;--text:#1b2333;--muted:#6b7691;--input:#fff}'

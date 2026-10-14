@@ -16,7 +16,7 @@ $stmt->execute([$id, $uid]);
 $qr = $stmt->fetch();
 if (!$qr) {
     http_response_code(404);
-    flash('QR code not found.', 'error');
+    flash(t('err.not_found'), 'error');
     redirect('dashboard.php');
 }
 
@@ -35,16 +35,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // field can never leave the stored logo half-updated.
         $errorMsg = null;
         if ($newTitle === '' || mb_strlen($newTitle) > 120 || $newTarget === null) {
-            $errorMsg = 'Please provide a title and a valid http(s) URL.';
+            $errorMsg = t('err.title_url');
         } elseif ($newSlug !== $qr['code']) {
             // The custom code changed — validate format and uniqueness.
             if (!valid_slug($newSlug)) {
-                $errorMsg = 'Custom code: 3–32 letters, digits, hyphens or underscores, starting and ending with a letter or digit.';
+                $errorMsg = t('err.slug');
             } else {
                 $dup = $pdo->prepare('SELECT 1 FROM qr_codes WHERE code = ? AND id <> ?');
                 $dup->execute([$newSlug, $id]);
                 if ($dup->fetchColumn() !== false) {
-                    $errorMsg = 'That custom code is already taken — try another.';
+                    $errorMsg = t('err.slug_taken');
                 }
             }
         }
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 $u->execute([$newSlug, $newTitle, $newTarget, $newFg, $newBg, $logoPath,
                              $pwHash, $expires, $scanLimit, $folderId, $id, $uid]);
-                flash('Changes saved.', 'success');
+                flash(t('view.saved'), 'success');
             } catch (RuntimeException $e) {
                 // store_logo() failed; the old logo and row are left untouched.
                 flash($e->getMessage(), 'error');
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'toggle') {
         $u = $pdo->prepare('UPDATE qr_codes SET is_active = 1 - is_active WHERE id = ? AND user_id = ?');
         $u->execute([$id, $uid]);
-        flash('Status updated.', 'success');
+        flash(t('view.status_updated'), 'success');
     }
     redirect('view.php?id=' . $id);
 }
@@ -144,7 +144,7 @@ $logoUrl  = $qr['logo_path'] ? url($qr['logo_path']) : null;
 $title = $qr['title'];
 ob_start();
 ?>
-<p><a href="<?= e(url('dashboard.php')) ?>">← Back to dashboard</a></p>
+<p><a href="<?= e(url('dashboard.php')) ?>"><?= e(t('create.back')) ?></a></p>
 
 <div class="grid-2 section">
     <div class="card stack center">
@@ -159,23 +159,23 @@ ob_start();
 
     <div class="stack">
         <div class="card stack">
-            <h2 style="margin:0">Edit</h2>
+            <h2 style="margin:0"><?= e(t('view.edit')) ?></h2>
             <form method="post" class="stack" enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="update">
                 <div class="field">
-                    <label for="title">Title</label>
+                    <label for="title"><?= e(t('form.title')) ?></label>
                     <input type="text" id="title" name="title" value="<?= e($qr['title']) ?>" required>
                 </div>
                 <div class="field">
-                    <label for="target_url">Destination URL</label>
+                    <label for="target_url"><?= e(t('form.dest')) ?></label>
                     <input type="text" id="target_url" name="target_url" value="<?= e($qr['target_url']) ?>" required>
                 </div>
                 <?php if ($myFolders): ?>
                 <div class="field">
-                    <label for="folder_id">Folder</label>
+                    <label for="folder_id"><?= e(t('form.folder')) ?></label>
                     <select id="folder_id" name="folder_id">
-                        <option value="">No folder</option>
+                        <option value=""><?= e(t('form.no_folder')) ?></option>
                         <?php foreach ($myFolders as $f): ?>
                             <option value="<?= (int) $f['id'] ?>" <?= (string) $qr['folder_id'] === (string) $f['id'] ? 'selected' : '' ?>><?= e($f['name']) ?></option>
                         <?php endforeach; ?>
@@ -183,62 +183,62 @@ ob_start();
                 </div>
                 <?php endif; ?>
                 <div class="field">
-                    <label for="slug">Custom code</label>
+                    <label for="slug"><?= e(t('form.slug')) ?></label>
                     <input type="text" id="slug" name="slug" value="<?= e($qr['code']) ?>"
                            pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,30}[A-Za-z0-9]" maxlength="32" required>
                     <p class="muted" style="font-size:.8rem;margin:6px 0 0">
-                        Changing this changes the link — any already-printed QR with the old code stops working.
+                        <?= e(t('form.slug_warn')) ?>
                     </p>
                 </div>
                 <div class="row">
                     <div class="field">
-                        <label for="fg_color">QR colour</label>
+                        <label for="fg_color"><?= e(t('form.qr_colour')) ?></label>
                         <input type="color" id="fg_color" name="fg_color" value="<?= e($qr['fg_color']) ?>">
                     </div>
                     <div class="field">
-                        <label for="bg_color">Background</label>
+                        <label for="bg_color"><?= e(t('form.background')) ?></label>
                         <input type="color" id="bg_color" name="bg_color" value="<?= e($qr['bg_color']) ?>">
                     </div>
                 </div>
                 <div class="field">
-                    <label for="logo">Centre logo <span class="muted">(PNG/JPG/WebP, max 1 MB)</span></label>
+                    <label for="logo"><?= e(t('form.logo')) ?> <span class="muted"><?= e(t('form.logo_opt2')) ?></span></label>
                     <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/webp">
                     <?php if (!empty($qr['logo_path'])): ?>
                         <label class="muted" style="font-weight:400;margin-top:8px">
-                            <input type="checkbox" name="remove_logo" value="1" style="width:auto"> Remove current logo
+                            <input type="checkbox" name="remove_logo" value="1" style="width:auto"> <?= e(t('view.remove_logo')) ?>
                         </label>
                     <?php endif; ?>
                 </div>
 
                 <details <?= ($qr['password_hash'] || $qr['expires_at'] || $qr['scan_limit']) ? 'open' : '' ?>>
-                    <summary style="cursor:pointer;font-weight:600;margin:4px 0">Protection</summary>
+                    <summary style="cursor:pointer;font-weight:600;margin:4px 0"><?= e(t('form.protection')) ?></summary>
                     <div class="stack" style="margin-top:12px">
                         <div class="field">
-                            <label for="password">Password</label>
+                            <label for="password"><?= e(t('form.password')) ?></label>
                             <input type="text" id="password" name="password"
-                                   placeholder="<?= $qr['password_hash'] ? '•••••• (set — leave blank to keep)' : 'None' ?>">
+                                   placeholder="<?= $qr['password_hash'] ? t('view.password_set_ph') : t('view.password_none') ?>">
                             <?php if ($qr['password_hash']): ?>
                                 <label class="muted" style="font-weight:400;margin-top:8px">
-                                    <input type="checkbox" name="remove_password" value="1" style="width:auto"> Remove password
+                                    <input type="checkbox" name="remove_password" value="1" style="width:auto"> <?= e(t('view.remove_password')) ?>
                                 </label>
                             <?php endif; ?>
                         </div>
                         <div class="row">
                             <div class="field">
-                                <label for="expires_at">Expires at</label>
+                                <label for="expires_at"><?= e(t('form.expires')) ?></label>
                                 <input type="datetime-local" id="expires_at" name="expires_at"
                                        value="<?= e(to_datetime_local($qr['expires_at'])) ?>">
                             </div>
                             <div class="field">
-                                <label for="scan_limit">Scan limit</label>
+                                <label for="scan_limit"><?= e(t('form.scan_limit')) ?></label>
                                 <input type="number" id="scan_limit" name="scan_limit" min="1"
-                                       placeholder="Unlimited" value="<?= e((string) ($qr['scan_limit'] ?? '')) ?>">
+                                       placeholder="<?= e(t('form.unlimited_ph')) ?>" value="<?= e((string) ($qr['scan_limit'] ?? '')) ?>">
                             </div>
                         </div>
                     </div>
                 </details>
 
-                <button type="submit" class="btn btn-primary btn-block">Save changes</button>
+                <button type="submit" class="btn btn-primary btn-block"><?= e(t('view.save')) ?></button>
             </form>
         </div>
 
@@ -248,31 +248,31 @@ ob_start();
                 <form method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="toggle">
-                    <button type="submit" class="btn btn-ghost"><?= $qr['is_active'] ? 'Pause' : 'Activate' ?></button>
+                    <button type="submit" class="btn btn-ghost"><?= e($qr['is_active'] ? t('view.pause') : t('view.activate')) ?></button>
                 </form>
                 <form method="post" action="<?= e(url('delete.php')) ?>"
-                      onsubmit="return confirm('Delete this QR code and its scan history?');">
+                      onsubmit='return confirm(<?= e(json_encode(t('view.confirm_delete'), JSON_UNESCAPED_UNICODE)) ?>);'>
                     <?= csrf_field() ?>
                     <input type="hidden" name="id" value="<?= (int) $qr['id'] ?>">
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger"><?= e(t('common.delete')) ?></button>
                 </form>
             </div>
-            <div class="muted">Status: <span class="badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span></div>
+            <div class="muted"><?= e(t('view.status')) ?> <span class="badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span></div>
         </div>
     </div>
 </div>
 
 <div class="card section">
     <div class="section-head">
-        <h2 style="margin:0">Scans — last 14 days</h2>
+        <h2 style="margin:0"><?= e(t('view.scans_title')) ?></h2>
         <div style="display:flex;align-items:center;gap:14px">
-            <span class="muted">Total: <strong><?= (int) $qr['scan_count'] ?></strong></span>
+            <span class="muted"><?= e(t('view.total')) ?> <strong><?= (int) $qr['scan_count'] ?></strong></span>
             <?php if ((int) $qr['scan_count'] > 0): ?>
-                <a class="btn btn-ghost" href="<?= e(url('export.php?id=' . (int) $qr['id'])) ?>">Export CSV</a>
+                <a class="btn btn-ghost" href="<?= e(url('export.php?id=' . (int) $qr['id'])) ?>"><?= e(t('view.export')) ?></a>
             <?php endif; ?>
         </div>
     </div>
-    <svg viewBox="0 0 560 160" width="100%" height="160" role="img" aria-label="Scans per day">
+    <svg viewBox="0 0 560 160" width="100%" height="160" role="img" aria-label="<?= e(t('view.scans_aria')) ?>">
         <?php $barW = 560 / count($days); ?>
         <?php foreach ($days as $i => $d): ?>
             <?php
@@ -299,7 +299,7 @@ ob_start();
             $pct = round($r['n'] / $total * 100);
             $html .= '<div style="margin-bottom:10px">'
                 . '<div style="display:flex;justify-content:space-between;font-size:.88rem">'
-                . '<span>' . e($r['k']) . '</span><span class="muted">' . (int) $r['n'] . '</span></div>'
+                . '<span>' . e($r['k'] === 'Unknown' ? t('view.unknown') : $r['k']) . '</span><span class="muted">' . (int) $r['n'] . '</span></div>'
                 . '<div style="height:6px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:3px">'
                 . '<div style="height:100%;width:' . $pct . '%;background:var(--primary)"></div></div></div>';
         }
@@ -307,9 +307,9 @@ ob_start();
     };
 ?>
 <div class="grid-3 section">
-    <?= $panel('By device', $byDevice) ?>
-    <?= $panel('By OS', $byOs) ?>
-    <?= $panel('By browser', $byBrowser) ?>
+    <?= $panel(t('view.by_device'), $byDevice) ?>
+    <?= $panel(t('view.by_os'), $byOs) ?>
+    <?= $panel(t('view.by_browser'), $byBrowser) ?>
 </div>
 <?php endif; ?>
 

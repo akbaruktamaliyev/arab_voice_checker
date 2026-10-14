@@ -16,26 +16,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Never let an admin lock themselves out by acting on their own account.
     if ($target === $me) {
-        flash('You cannot change your own account here.', 'error');
+        flash(t('adm.err_self'), 'error');
         redirect('admin/users.php');
     }
 
     switch ($action) {
         case 'block':
             $pdo->prepare('UPDATE users SET is_blocked = 1 WHERE id = ?')->execute([$target]);
-            flash('User suspended.', 'success');
+            flash(t('adm.u_suspended'), 'success');
             break;
         case 'unblock':
             $pdo->prepare('UPDATE users SET is_blocked = 0 WHERE id = ?')->execute([$target]);
-            flash('User restored.', 'success');
+            flash(t('adm.u_restored'), 'success');
             break;
         case 'make_admin':
             $pdo->prepare("UPDATE users SET role = 'admin' WHERE id = ?")->execute([$target]);
-            flash('User promoted to admin.', 'success');
+            flash(t('adm.u_promoted'), 'success');
             break;
         case 'remove_admin':
             $pdo->prepare("UPDATE users SET role = 'user' WHERE id = ?")->execute([$target]);
-            flash('Admin rights removed.', 'success');
+            flash(t('adm.u_demoted'), 'success');
             break;
         case 'delete':
             // Remove the user's uploaded logo files first — the FK cascade only
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             // FK cascades remove the user's codes and scans.
             $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$target]);
-            flash('User deleted.', 'info');
+            flash(t('adm.u_deleted'), 'info');
             break;
     }
     redirect('admin/users.php');
@@ -68,31 +68,31 @@ function act(int $id, string $action, string $label, string $class): string
         . '<button class="btn ' . e($class) . '" style="padding:5px 10px;font-size:.85rem">' . e($label) . '</button></form>';
 }
 
-$title = 'Users';
+$title = t('adm.users');
 ob_start();
 ?>
 <div class="section-head">
-    <h1 style="margin:0">Users</h1>
-    <a href="<?= e(url('admin/index.php')) ?>">← Admin</a>
+    <h1 style="margin:0"><?= e(t('adm.users')) ?></h1>
+    <a href="<?= e(url('admin/index.php')) ?>"><?= e(t('adm.back')) ?></a>
 </div>
 
 <div class="card">
     <div class="table-wrap"><table class="table">
-        <thead><tr><th>User</th><th>Codes</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th><?= e(t('adm.th_user')) ?></th><th><?= e(t('adm.th_codes')) ?></th><th><?= e(t('adm.th_role')) ?></th><th><?= e(t('adm.th_status')) ?></th><th><?= e(t('adm.th_actions')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($users as $u): $id = (int) $u['id']; ?>
             <tr>
                 <td><?= e($u['name']) ?><div class="muted" style="font-size:.8rem"><?= e($u['email']) ?></div></td>
                 <td><?= (int) $u['codes'] ?></td>
-                <td><span class="badge <?= $u['role'] === 'admin' ? 'badge-on' : '' ?>"><?= e($u['role']) ?></span></td>
-                <td><span class="badge <?= $u['is_blocked'] ? 'badge-off' : 'badge-on' ?>"><?= $u['is_blocked'] ? 'Suspended' : 'Active' ?></span></td>
+                <td><span class="badge <?= $u['role'] === 'admin' ? 'badge-on' : '' ?>"><?= e($u['role'] === 'admin' ? t('adm.role_admin') : t('adm.role_user')) ?></span></td>
+                <td><span class="badge <?= $u['is_blocked'] ? 'badge-off' : 'badge-on' ?>"><?= e($u['is_blocked'] ? t('adm.suspended') : t('status.active')) ?></span></td>
                 <td>
                     <?php if ($id === $me): ?>
-                        <span class="muted" style="font-size:.85rem">You</span>
+                        <span class="muted" style="font-size:.85rem"><?= e(t('adm.you')) ?></span>
                     <?php else: ?>
-                        <?= $u['is_blocked'] ? act($id, 'unblock', 'Restore', 'btn-ghost') : act($id, 'block', 'Suspend', 'btn-ghost') ?>
-                        <?= $u['role'] === 'admin' ? act($id, 'remove_admin', 'Demote', 'btn-ghost') : act($id, 'make_admin', 'Make admin', 'btn-ghost') ?>
-                        <?= act($id, 'delete', 'Delete', 'btn-danger') ?>
+                        <?= $u['is_blocked'] ? act($id, 'unblock', t('adm.restore'), 'btn-ghost') : act($id, 'block', t('adm.suspend'), 'btn-ghost') ?>
+                        <?= $u['role'] === 'admin' ? act($id, 'remove_admin', t('adm.demote'), 'btn-ghost') : act($id, 'make_admin', t('adm.make_admin'), 'btn-ghost') ?>
+                        <?= act($id, 'delete', t('common.delete'), 'btn-danger') ?>
                     <?php endif; ?>
                 </td>
             </tr>

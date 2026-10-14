@@ -91,7 +91,17 @@ database.sql         Schema (users, qr_codes, qr_scans)
 src/                 Bootstrap, DB, auth, CSRF, helpers, layout
 public/              Web root — pages, redirect endpoint, assets
 docs/                Installation guide
+lang/                Translations (en, ru, uz)
 ```
+
+## Adding a language
+
+Each language is three files in `lang/`: `xx.php` (landing, sign-in), `xx.app.php`
+(signed-in pages) and `xx.admin.php` (admin panel). Copy the `en.*` files, rename them
+to your language code (e.g. `de.php`, `de.app.php`, `de.admin.php`) and translate the
+values — missing keys fall back to English. Text of the default plans lives under
+`dyn:` keys in `en.app.php`; add the same keys to translate plan names and features.
+The installer and the REST API's JSON errors stay in English.
 
 ## Security notes
 

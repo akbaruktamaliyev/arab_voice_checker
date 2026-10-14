@@ -12,13 +12,13 @@ if (current_user_id() !== null) {
 
 // Registration can be switched off by the administrator.
 if (setting('allow_registration', '1') !== '1') {
-    $title = 'Registration closed';
+    $title = t('reg.closed');
     ob_start(); ?>
     <section class="section" style="max-width:440px;margin-inline:auto">
         <div class="card center stack">
-            <h1 style="margin:0">Registration is closed</h1>
-            <p class="muted">New sign-ups are currently disabled. Please check back later.</p>
-            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>">Back to sign in</a>
+            <h1 style="margin:0"><?= e(t('reg.closed')) ?></h1>
+            <p class="muted"><?= e(t('reg.closed_text')) ?></p>
+            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>"><?= e(t('forgot.back')) ?></a>
         </div>
     </section>
     <?php
@@ -38,20 +38,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass  = (string) ($_POST['password'] ?? '');
 
     if ($name === '' || mb_strlen($name) > 80) {
-        $errors[] = 'Please enter your name (up to 80 characters).';
+        $errors[] = t('acc.err_name');
     }
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Please enter a valid email address.';
+        $errors[] = t('acc.err_email');
     }
     if (strlen($pass) < 8) {
-        $errors[] = 'Password must be at least 8 characters.';
+        $errors[] = t('err.pw_short');
     }
 
     if (!$errors) {
         $stmt = $pdo->prepare('SELECT 1 FROM users WHERE email = ?');
         $stmt->execute([$email]);
         if ($stmt->fetchColumn() !== false) {
-            $errors[] = 'An account with that email already exists.';
+            $errors[] = t('reg.exists');
         }
     }
 
@@ -68,11 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($mustVerify) {
                 $link = url('verify.php?token=' . $verifyToken);
-                $okMail = send_mail($email, app_name() . ' — confirm your email',
-                    '<p>Confirm your email for ' . e(app_name()) . ':</p>'
+                $okMail = send_mail($email, t('mail.verify_subject', app_name()),
+                    '<p>' . e(t('mail.verify_body', app_name())) . '</p>'
                     . '<p><a href="' . e($link) . '">' . e($link) . '</a></p>');
                 if ($okMail) {
-                    flash('Almost there — check your email to confirm your account.', 'success');
+                    flash(t('reg.check_mail'), 'success');
                     redirect('login.php');
                 }
                 // The verification email could not be sent — don't strand the
@@ -82,14 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             login_user($newId);
-            flash('Welcome to ' . app_name() . '! Your account is ready.', 'success');
+            flash(t('reg.welcome', app_name()), 'success');
             redirect('dashboard.php');
         } catch (PDOException $e) {
             // Safety net for the check-then-insert race: the unique index on
             // email is the real guard, so a duplicate surfaces as a friendly
             // message instead of an uncaught 500.
             if ($e->getCode() === '23000') {
-                $errors[] = 'An account with that email already exists.';
+                $errors[] = t('reg.exists');
             } else {
                 throw $e;
             }
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$title = 'Create your account';
+$title = t('auth.create_account');
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

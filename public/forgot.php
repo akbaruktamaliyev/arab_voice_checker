@@ -26,17 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('UPDATE users SET reset_token = ?, reset_expires = (NOW() + INTERVAL 1 HOUR) WHERE id = ?')
                 ->execute([hash('sha256', $token), $user['id']]);
             $link = url('reset.php?token=' . $token);
-            send_mail($email, app_name() . ' password reset',
-                '<p>Reset your ' . e(app_name()) . ' password:</p>'
+            send_mail($email, t('mail.reset_subject', app_name()),
+                '<p>' . e(t('mail.reset_body', app_name())) . '</p>'
                 . '<p><a href="' . e($link) . '">' . e($link) . '</a></p>'
-                . '<p>This link expires in 1 hour. If you did not request it, ignore this email.</p>');
+                . '<p>' . e(t('mail.reset_footer')) . '</p>');
         }
     }
     // Always the same response — never reveal whether an email is registered.
     $sent = true;
 }
 
-$title = 'Reset password';
+$title = t('forgot.page_title');
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

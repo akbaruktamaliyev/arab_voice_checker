@@ -21,19 +21,19 @@ if ($token !== '') {
     }
 }
 
-$title = 'Email verification';
+$title = t('verify.title');
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">
     <div class="card stack center">
         <?php if ($ok): ?>
-            <h1 style="margin:0">Email verified</h1>
-            <p class="muted">Your email is confirmed. You can sign in now.</p>
-            <a class="btn btn-primary" href="<?= e(url('login.php')) ?>">Sign in</a>
+            <h1 style="margin:0"><?= e(t('verify.ok')) ?></h1>
+            <p class="muted"><?= e(t('verify.ok_text')) ?></p>
+            <a class="btn btn-primary" href="<?= e(url('login.php')) ?>"><?= e(t('auth.signin')) ?></a>
         <?php else: ?>
-            <h1 style="margin:0">Invalid link</h1>
-            <p class="muted">This verification link is invalid or already used.</p>
-            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>">Back to sign in</a>
+            <h1 style="margin:0"><?= e(t('verify.bad')) ?></h1>
+            <p class="muted"><?= e(t('verify.bad_text')) ?></p>
+            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>"><?= e(t('forgot.back')) ?></a>
         <?php endif; ?>
     </div>
 </section>

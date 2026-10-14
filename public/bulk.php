@@ -19,17 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $file = $_FILES['csv'] ?? [];
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-        flash('Please choose a CSV file.', 'error');
+        flash(t('bulk.err_choose'), 'error');
         redirect('bulk.php');
     }
     if ($file['size'] > 2 * 1024 * 1024) {
-        flash('The CSV must be 2 MB or smaller.', 'error');
+        flash(t('bulk.err_size'), 'error');
         redirect('bulk.php');
     }
 
     $handle = fopen($file['tmp_name'], 'r');
     if ($handle === false) {
-        flash('Could not read the uploaded file.', 'error');
+        flash(t('bulk.err_read'), 'error');
         redirect('bulk.php');
     }
 
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     while (($row = fgetcsv($handle, 0, ',', '"', '')) !== false) {
         $rowNo++;
         if ($rowNo > $MAX) {
-            $errors[] = "Stopped at row $MAX (import limit).";
+            $errors[] = t('bulk.err_stopped', $MAX);
             break;
         }
         // Skip a header row — only when the cells are exactly the column names.
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $seenHeader = true;
 
         if (!within_limit($planCodes, $have)) {
-            $errors[] = "Plan limit reached ({$plan['name']}: {$planCodes}). Remaining rows skipped.";
+            $errors[] = t('bulk.err_plan', td($plan['name']), (int) $planCodes);
             break;
         }
 
@@ -71,22 +71,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             continue; // blank line
         }
         if ($title === '' || mb_strlen($title) > 120) {
-            $errors[] = "Row $rowNo: missing/invalid title.";
+            $errors[] = t('bulk.err_row_title', $rowNo);
             continue;
         }
         if ($target === null) {
-            $errors[] = "Row $rowNo: invalid URL.";
+            $errors[] = t('bulk.err_row_url', $rowNo);
             continue;
         }
         if ($slug !== '') {
             if (!valid_slug($slug)) {
-                $errors[] = "Row $rowNo: invalid custom code '$slug'.";
+                $errors[] = t('bulk.err_row_slug', $rowNo, $slug);
                 continue;
             }
             $dup = $pdo->prepare('SELECT 1 FROM qr_codes WHERE code = ?');
             $dup->execute([$slug]);
             if ($dup->fetchColumn() !== false) {
-                $errors[] = "Row $rowNo: code '$slug' already taken.";
+                $errors[] = t('bulk.err_row_taken', $rowNo, $slug);
                 continue;
             }
             $code = $slug;
@@ -102,33 +102,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     fclose($handle);
 
     $result = ['created' => $created, 'errors' => $errors];
-    flash("$created code(s) created.", $created ? 'success' : 'info');
+    flash(t('bulk.created', $created), $created ? 'success' : 'info');
 }
 
-$title = 'Bulk import';
+$title = t('bulk.title');
 ob_start();
 ?>
 <div class="section-head">
-    <h1 style="margin:0">Bulk import</h1>
-    <a href="<?= e(url('dashboard.php')) ?>">← Dashboard</a>
+    <h1 style="margin:0"><?= e(t('bulk.title')) ?></h1>
+    <a href="<?= e(url('dashboard.php')) ?>"><?= e(t('common.back_dashboard')) ?></a>
 </div>
 
 <div class="grid-2 section">
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem">Upload a CSV</h2>
-        <p class="muted" style="margin:0">Columns: <code>title, target_url, slug</code> (slug optional).
-           A header row is detected automatically. Up to <?= $MAX ?> rows.</p>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('bulk.upload')) ?></h2>
+        <p class="muted" style="margin:0"><?= t('bulk.help', (int) $MAX) ?></p>
         <form method="post" enctype="multipart/form-data" class="stack">
             <?= csrf_field() ?>
             <div class="field">
                 <input type="file" name="csv" accept=".csv,text/csv" required>
             </div>
-            <button class="btn btn-primary">Import</button>
+            <button class="btn btn-primary"><?= e(t('bulk.import')) ?></button>
         </form>
     </div>
 
     <div class="card">
-        <h2 style="margin:0 0 10px;font-size:1.1rem">Example</h2>
+        <h2 style="margin:0 0 10px;font-size:1.1rem"><?= e(t('bulk.example')) ?></h2>
         <code style="display:block;white-space:pre;background:var(--bg);padding:10px 12px;border-radius:8px;font-size:.82rem">title,target_url,slug
 Summer menu,https://example.com/menu,summer-menu
 Promo,https://example.com/promo,
@@ -138,17 +137,17 @@ Contact,https://example.com/contact,</code>
 
 <?php if ($result !== null): ?>
     <div class="card">
-        <h2 style="margin:0 0 10px;font-size:1.1rem">Result</h2>
-        <p><strong><?= (int) $result['created'] ?></strong> code(s) created.</p>
+        <h2 style="margin:0 0 10px;font-size:1.1rem"><?= e(t('bulk.result')) ?></h2>
+        <p><?= t('bulk.created_html', (int) $result['created']) ?></p>
         <?php if ($result['errors']): ?>
-            <p class="muted" style="margin:10px 0 4px">Skipped rows:</p>
+            <p class="muted" style="margin:10px 0 4px"><?= e(t('bulk.skipped')) ?></p>
             <ul class="muted" style="margin:0;font-size:.9rem">
                 <?php foreach (array_slice($result['errors'], 0, 50) as $err): ?>
                     <li><?= e($err) ?></li>
                 <?php endforeach; ?>
             </ul>
         <?php endif; ?>
-        <a class="btn btn-primary" style="margin-top:12px" href="<?= e(url('dashboard.php')) ?>">View codes</a>
+        <a class="btn btn-primary" style="margin-top:12px" href="<?= e(url('dashboard.php')) ?>"><?= e(t('bulk.view_codes')) ?></a>
     </div>
 <?php endif; ?>
 <?php

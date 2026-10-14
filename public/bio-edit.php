@@ -15,7 +15,7 @@ $stmt->execute([$id, $uid]);
 $bio = $stmt->fetch();
 if (!$bio) {
     http_response_code(404);
-    flash('Bio page not found.', 'error');
+    flash(t('bio.not_found'), 'error');
     redirect('bios.php');
 }
 
@@ -31,14 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $err = null;
         if ($newTitle === '' || mb_strlen($newTitle) > 120) {
-            $err = 'Enter a page title.';
+            $err = t('bio.err_title');
         } elseif ($newSlug !== $bio['slug']) {
             if (!valid_slug($newSlug)) {
-                $err = 'Invalid handle.';
+                $err = t('bio.err_handle_short');
             } else {
                 $dup = $pdo->prepare('SELECT 1 FROM bio_pages WHERE slug = ? AND id <> ?');
                 $dup->execute([$newSlug, $id]);
-                if ($dup->fetchColumn() !== false) { $err = 'That handle is already taken.'; }
+                if ($dup->fetchColumn() !== false) { $err = t('bio.err_taken'); }
             }
         }
         if ($err) {
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $pdo->prepare('UPDATE bio_pages SET title = ?, headline = ?, theme = ?, slug = ? WHERE id = ? AND user_id = ?')
                 ->execute([$newTitle, $headline ?: null, $theme, $newSlug, $id, $uid]);
-            flash('Saved.', 'success');
+            flash(t('bio.saved'), 'success');
         }
     } elseif ($action === 'add_link') {
         $label = trim((string) ($_POST['label'] ?? ''));
@@ -56,9 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $max->execute([$id]);
             $pdo->prepare('INSERT INTO bio_links (bio_id, label, url, sort) VALUES (?, ?, ?, ?)')
                 ->execute([$id, mb_substr($label, 0, 120), $url, (int) $max->fetchColumn()]);
-            flash('Link added.', 'success');
+            flash(t('bio.link_added'), 'success');
         } else {
-            flash('Enter a label and a valid URL.', 'error');
+            flash(t('bio.err_link'), 'error');
         }
     } elseif ($action === 'delete_link') {
         $pdo->prepare('DELETE FROM bio_links WHERE id = ? AND bio_id = ?')
@@ -88,58 +88,58 @@ $links = $pdo->prepare('SELECT * FROM bio_links WHERE bio_id = ? ORDER BY sort, 
 $links->execute([$id]);
 $links = $links->fetchAll();
 
-$title = 'Edit bio page';
+$title = t('bio.edit_title');
 ob_start();
 ?>
 <div class="section-head">
     <h1 style="margin:0"><?= e($bio['title']) ?></h1>
     <div style="display:flex;gap:10px">
-        <a class="btn btn-ghost" href="<?= e(url('b/' . $bio['slug'])) ?>" target="_blank">Open</a>
-        <a href="<?= e(url('bios.php')) ?>">← All pages</a>
+        <a class="btn btn-ghost" href="<?= e(url('b/' . $bio['slug'])) ?>" target="_blank"><?= e(t('bio.open')) ?></a>
+        <a href="<?= e(url('bios.php')) ?>"><?= e(t('bio.all_pages')) ?></a>
     </div>
 </div>
 
 <div class="grid-2 section">
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem">Page</h2>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('bio.page')) ?></h2>
         <form method="post" class="stack">
             <?= csrf_field() ?><input type="hidden" name="action" value="save_page">
-            <div class="field"><label for="title">Title</label>
+            <div class="field"><label for="title"><?= e(t('bio.f_title')) ?></label>
                 <input type="text" id="title" name="title" value="<?= e($bio['title']) ?>" required></div>
-            <div class="field"><label for="headline">Headline</label>
-                <input type="text" id="headline" name="headline" value="<?= e($bio['headline'] ?? '') ?>" placeholder="Optional tagline"></div>
+            <div class="field"><label for="headline"><?= e(t('bio.headline')) ?></label>
+                <input type="text" id="headline" name="headline" value="<?= e($bio['headline'] ?? '') ?>" placeholder="<?= e(t('bio.headline_ph')) ?>"></div>
             <div class="row">
-                <div class="field"><label for="slug">Handle</label>
+                <div class="field"><label for="slug"><?= e(t('bio.handle')) ?></label>
                     <input type="text" id="slug" name="slug" value="<?= e($bio['slug']) ?>"
                            pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,30}[A-Za-z0-9]" required></div>
-                <div class="field"><label for="theme">Theme</label>
+                <div class="field"><label for="theme"><?= e(t('bio.theme')) ?></label>
                     <select id="theme" name="theme">
-                        <?php foreach (['light' => 'Light', 'dark' => 'Dark', 'indigo' => 'Indigo', 'sunset' => 'Sunset'] as $v => $l): ?>
+                        <?php foreach (['light' => t('bio.theme_light'), 'dark' => t('bio.theme_dark'), 'indigo' => t('bio.theme_indigo'), 'sunset' => t('bio.theme_sunset')] as $v => $l): ?>
                             <option value="<?= $v ?>" <?= $bio['theme'] === $v ? 'selected' : '' ?>><?= $l ?></option>
                         <?php endforeach; ?>
                     </select></div>
             </div>
-            <button class="btn btn-primary">Save page</button>
+            <button class="btn btn-primary"><?= e(t('bio.save_page')) ?></button>
         </form>
     </div>
 
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem">Add a link</h2>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('bio.add_link')) ?></h2>
         <form method="post" class="stack">
             <?= csrf_field() ?><input type="hidden" name="action" value="add_link">
-            <div class="field"><label for="label">Label</label>
-                <input type="text" id="label" name="label" placeholder="My website" required></div>
+            <div class="field"><label for="label"><?= e(t('bio.label')) ?></label>
+                <input type="text" id="label" name="label" placeholder="<?= e(t('bio.label_ph')) ?>" required></div>
             <div class="field"><label for="url">URL</label>
                 <input type="text" id="url" name="url" placeholder="https://example.com" required></div>
-            <button class="btn btn-primary">Add link</button>
+            <button class="btn btn-primary"><?= e(t('bio.add_link_btn')) ?></button>
         </form>
     </div>
 </div>
 
 <div class="card">
-    <h2 style="margin:0 0 12px;font-size:1.1rem">Links</h2>
+    <h2 style="margin:0 0 12px;font-size:1.1rem"><?= e(t('bio.links')) ?></h2>
     <?php if (!$links): ?>
-        <p class="muted center" style="padding:16px 0">No links yet — add one above.</p>
+        <p class="muted center" style="padding:16px 0"><?= e(t('bio.no_links')) ?></p>
     <?php else: ?>
         <div class="table-wrap"><table class="table">
             <tbody>
@@ -156,10 +156,10 @@ ob_start();
                                 <button class="btn btn-ghost" style="padding:4px 9px"><?= $sym ?></button>
                             </form>
                         <?php endforeach; ?>
-                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this link?');">
+                        <form method="post" style="display:inline" onsubmit='return confirm(<?= e(json_encode(t('bio.confirm_delete_link'), JSON_UNESCAPED_UNICODE)) ?>);'>
                             <?= csrf_field() ?><input type="hidden" name="action" value="delete_link">
                             <input type="hidden" name="link_id" value="<?= (int) $l['id'] ?>">
-                            <button class="btn btn-danger" style="padding:4px 9px;font-size:.8rem">Delete</button>
+                            <button class="btn btn-danger" style="padding:4px 9px;font-size:.8rem"><?= e(t('common.delete')) ?></button>
                         </form>
                     </td>
                 </tr>

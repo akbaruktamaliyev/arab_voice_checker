@@ -10,6 +10,6 @@ require __DIR__ . '/../src/bootstrap.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     logout_user();
-    flash('You have been signed out.', 'info');
+    flash(t('auth.signed_out'), 'info');
 }
 redirect('index.php');

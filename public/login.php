@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (login_locked($pdo)) {
         // Too many recent failures from this visitor: refuse without even
         // checking the credentials, so guessing gets no feedback.
-        $error = 'Too many failed attempts. Please wait ' . LOGIN_WINDOW_MINUTES . ' minutes and try again.';
+        $error = t('login.locked', LOGIN_WINDOW_MINUTES);
     } else {
         $stmt = $pdo->prepare('SELECT id, password_hash, is_blocked, is_verified FROM users WHERE email = ?');
         $stmt->execute([$email]);
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$title = 'Sign in';
+$title = t('auth.signin');
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

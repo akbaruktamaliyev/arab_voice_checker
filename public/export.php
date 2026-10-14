@@ -33,7 +33,7 @@ if ($id > 0) {
     $qr = $own->fetch();
     if (!$qr) {
         http_response_code(404);
-        flash('QR code not found.', 'error');
+        flash(t('err.not_found'), 'error');
         redirect('dashboard.php');
     }
     $filename = 'scans-' . $qr['code'] . '-' . date('Ymd') . '.csv';

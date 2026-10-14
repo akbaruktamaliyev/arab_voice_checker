@@ -25,5 +25,5 @@ if ($row) {
 $stmt = $pdo->prepare('DELETE FROM qr_codes WHERE id = ? AND user_id = ?');
 $stmt->execute([$id, current_user_id()]);
 
-flash($stmt->rowCount() ? 'QR code deleted.' : 'QR code not found.', 'info');
+flash($stmt->rowCount() ? t('dash.deleted') : t('err.not_found'), 'info');
 redirect('dashboard.php');

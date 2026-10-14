@@ -232,7 +232,7 @@
             var file = logoInput.files && logoInput.files[0];
             if (!file) return;
             if (!/^image\//.test(file.type) || file.size > 1024 * 1024) {
-                alert('Please choose an image file under 1 MB.');
+                alert(logoInput.getAttribute('data-error') || 'Please choose an image file under 1 MB.');
                 logoInput.value = ''; return;
             }
             var reader = new FileReader();

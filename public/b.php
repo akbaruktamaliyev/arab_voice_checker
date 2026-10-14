@@ -8,14 +8,14 @@ require __DIR__ . '/../src/bootstrap.php';
 
 $slug = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($_GET['s'] ?? ''));
 if ($slug === '') {
-    standalone_page('Not found', '<h1>Page not found</h1><p class="m">This link is not valid.</p>', 404);
+    standalone_page(t('q.nf_page'), '<h1>' . e(t('b.nf_title')) . '</h1><p class="m">' . e(t('b.invalid')) . '</p>', 404);
 }
 
 $stmt = $pdo->prepare('SELECT * FROM bio_pages WHERE slug = ?');
 $stmt->execute([$slug]);
 $bio = $stmt->fetch();
 if (!$bio) {
-    standalone_page('Not found', '<h1>Page not found</h1><p class="m">This page does not exist.</p>', 404);
+    standalone_page(t('q.nf_page'), '<h1>' . e(t('b.nf_title')) . '</h1><p class="m">' . e(t('b.missing')) . '</p>', 404);
 }
 
 $pdo->prepare('UPDATE bio_pages SET views = views + 1 WHERE id = ?')->execute([$bio['id']]);
@@ -32,7 +32,7 @@ $themes = [
 ];
 $t = $themes[$bio['theme']] ?? $themes['light'];
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?= e($GLOBALS['lang_code'] ?? 'en') ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -59,8 +59,8 @@ $t = $themes[$bio['theme']] ?? $themes['light'];
     <?php foreach ($links as $l): ?>
         <a class="link" href="<?= e($l['url']) ?>" target="_blank" rel="noopener"><?= e($l['label']) ?></a>
     <?php endforeach; ?>
-    <?php if (!$links): ?><p class="headline">No links yet.</p><?php endif; ?>
-    <p class="foot">Made with <a href="<?= e(url('index.php')) ?>"><?= e(app_name()) ?></a></p>
+    <?php if (!$links): ?><p class="headline"><?= e(t('bio.pub_none')) ?></p><?php endif; ?>
+    <p class="foot"><?= t('bio.made_with', '<a href="' . e(url('index.php')) . '">' . e(app_name()) . '</a>') ?></p>
 </div>
 </body>
 </html>

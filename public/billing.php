@@ -16,39 +16,39 @@ $row = $pdo->prepare('SELECT plan_expires FROM users WHERE id = ?');
 $row->execute([$uid]);
 $expires = $row->fetchColumn();
 
-$title = 'Billing';
+$title = t('bill.title');
 ob_start();
 ?>
 <div class="section-head">
-    <h1 style="margin:0">Your plan</h1>
-    <a href="<?= e(url('dashboard.php')) ?>">← Dashboard</a>
+    <h1 style="margin:0"><?= e(t('bill.heading')) ?></h1>
+    <a href="<?= e(url('dashboard.php')) ?>"><?= e(t('common.back_dashboard')) ?></a>
 </div>
 
 <?php if (!empty($_GET['paid'])): ?>
-    <div class="flash flash-success">Payment received — your plan is active.</div>
+    <div class="flash flash-success"><?= e(t('bill.paid')) ?></div>
 <?php endif; ?>
 
 <div class="grid-2 section">
     <div class="card stack">
-        <h2 style="margin:0;font-size:1.1rem"><?= e($plan['name']) ?></h2>
+        <h2 style="margin:0;font-size:1.1rem"><?= e(td($plan['name'])) ?></h2>
         <?php $isAdminPlan = (int) $plan['id'] === 0; ?>
         <?php if ($isAdminPlan): ?>
-            <p class="muted" style="margin:0">Administrators have unlimited access.</p>
+            <p class="muted" style="margin:0"><?= e(t('bill.admin')) ?></p>
         <?php elseif ($expires): ?>
-            <p class="muted" style="margin:0">Active until <?= e(date('Y-m-d', strtotime((string) $expires))) ?></p>
+            <p class="muted" style="margin:0"><?= e(t('bill.active_until', date('Y-m-d', strtotime((string) $expires)))) ?></p>
         <?php endif; ?>
         <div>
             <div style="display:flex;justify-content:space-between;font-size:.9rem">
-                <span>Dynamic codes</span>
+                <span><?= e(t('bill.codes')) ?></span>
                 <span class="muted"><?= $codes ?> / <?= $plan['max_codes'] === null ? '∞' : (int) $plan['max_codes'] ?></span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:.9rem;margin-top:6px">
-                <span>Bio pages</span>
+                <span><?= e(t('bill.bios')) ?></span>
                 <span class="muted"><?= $bios ?> / <?= $plan['max_bios'] === null ? '∞' : (int) $plan['max_bios'] ?></span>
             </div>
         </div>
         <?php if (!$isAdminPlan): ?>
-            <a class="btn btn-primary" href="<?= e(url('pricing.php')) ?>">Change plan</a>
+            <a class="btn btn-primary" href="<?= e(url('pricing.php')) ?>"><?= e(t('bill.change')) ?></a>
         <?php endif; ?>
     </div>
 </div>

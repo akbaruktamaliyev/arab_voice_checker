@@ -38,7 +38,7 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
         <a class="brand" href="<?= e(url('index.php')) ?>">
             <span class="brand-mark">▦</span> <?= e($appName) ?>
         </a>
-        <nav class="nav" id="site-nav" aria-label="Main">
+        <nav class="nav" id="site-nav" aria-label="<?= e(t('nav.main')) ?>">
             <a href="<?= e(url('index.php')) ?>"><?= e(t('nav.generator')) ?></a>
             <a href="<?= e(url('pricing.php')) ?>"><?= e(t('nav.pricing')) ?></a>
             <?php if ($uid !== null): ?>
@@ -56,8 +56,8 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
                 <a class="btn btn-primary btn-sm" href="<?= e(url('register.php')) ?>"><?= e(t('nav.getstarted')) ?></a>
             <?php endif; ?>
         </nav>
-        <button type="button" id="theme-toggle" class="icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
-        <button type="button" id="nav-toggle" class="icon-btn nav-toggle" aria-label="Menu" aria-controls="site-nav" aria-expanded="false">☰</button>
+        <button type="button" id="theme-toggle" class="icon-btn" title="<?= e(t('nav.toggle_theme')) ?>" aria-label="<?= e(t('nav.toggle_theme')) ?>">◐</button>
+        <button type="button" id="nav-toggle" class="icon-btn nav-toggle" aria-label="<?= e(t('nav.menu')) ?>" aria-controls="site-nav" aria-expanded="false">☰</button>
     </div>
 </header>
 
@@ -72,7 +72,7 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
 <footer class="site-footer">
     <div class="wrap footer-inner">
         <p>&copy; <?= date('Y') ?> <?= e($appName) ?></p>
-        <nav class="lang-switch" aria-label="Language">
+        <nav class="lang-switch" aria-label="<?= e(t('nav.language')) ?>">
             <?php
                 // Preserve the current query string when switching language.
                 $qs = $_GET; unset($qs['setlang']);

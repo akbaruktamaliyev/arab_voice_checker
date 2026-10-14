@@ -7,7 +7,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../src/bootstrap.php';
 
-$title = 'Free QR Code Generator';
+$title = t('hero.page_title');
 ob_start();
 ?>
 <section class="hero">
@@ -82,7 +82,7 @@ ob_start();
             </div>
             <div class="field">
                 <label for="qr-logo"><?= e(t('gen.logo')) ?> <span class="muted"><?= e(t('gen.optional')) ?></span></label>
-                <input type="file" id="qr-logo" accept="image/*">
+                <input type="file" id="qr-logo" accept="image/*" data-error="<?= e(t('gen.logo_err')) ?>">
                 <button type="button" id="qr-logo-clear" class="btn btn-ghost" hidden
                         style="margin-top:8px"><?= e(t('gen.removelogo')) ?></button>
             </div>

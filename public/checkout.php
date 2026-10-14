@@ -22,28 +22,28 @@ $plan = $stmt->fetch();
 function checkout_message(string $heading, string $body): never
 {
     global $pdo, $title;
-    $title = 'Checkout';
+    $title = t('co.title');
     ob_start(); ?>
     <section class="section" style="max-width:480px;margin-inline:auto">
         <div class="card center stack">
             <h1 style="margin:0"><?= e($heading) ?></h1>
             <p class="muted"><?= $body ?></p>
-            <a class="btn btn-ghost" href="<?= e(url('pricing.php')) ?>">Back to pricing</a>
+            <a class="btn btn-ghost" href="<?= e(url('pricing.php')) ?>"><?= e(t('co.back')) ?></a>
         </div>
     </section>
     <?php $content = ob_get_clean(); require __DIR__ . '/../src/layout.php'; exit;
 }
 
 if (!$plan || (int) $plan['price'] === 0) {
-    checkout_message('Plan unavailable', 'That plan cannot be purchased.');
+    checkout_message(t('co.unavail'), e(t('co.unavail_text')));
 }
 
 $secret = trim((string) setting('stripe_secret', ''));
 if ($secret === '') {
-    checkout_message('Payments not configured', 'The store owner has not connected Stripe yet. Add Stripe keys in the admin settings.');
+    checkout_message(t('co.nopay'), e(t('co.nopay_text')));
 }
 if (!function_exists('curl_init')) {
-    checkout_message('Checkout unavailable', 'The server is missing the PHP cURL extension required for payments.');
+    checkout_message(t('co.nocurl'), e(t('co.nocurl_text')));
 }
 
 // Create a Checkout Session via the Stripe API.
@@ -79,5 +79,4 @@ if ($code === 200 && !empty($data['url'])) {
     header('Location: ' . $data['url']);
     exit;
 }
-checkout_message('Checkout failed', 'Could not start the payment: '
-    . e($data['error']['message'] ?? 'unknown error') . '. Please try again.');
+checkout_message(t('co.failed'), e(t('co.failed_text', (string) ($data['error']['message'] ?? t('co.unknown')))));
