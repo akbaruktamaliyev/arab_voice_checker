@@ -32,8 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $filter = (string) ($_GET['folder'] ?? '');
 
 $folders = $pdo->prepare(
-    'SELECT f.id, f.name, (SELECT COUNT(*) FROM qr_codes c WHERE c.folder_id = f.id) AS n
-     FROM folders f WHERE f.user_id = ? ORDER BY f.name'
+    'SELECT f.id, f.name, COUNT(c.id) AS n
+     FROM folders f LEFT JOIN qr_codes c ON c.folder_id = f.id
+     WHERE f.user_id = ? GROUP BY f.id, f.name ORDER BY f.name'
 );
 $folders->execute([$uid]);
 $folders = $folders->fetchAll();
