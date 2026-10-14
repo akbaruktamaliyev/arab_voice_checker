@@ -37,6 +37,14 @@ First public release.
   API messages, CSV headers, the free generator. Right-to-left layouts are supported.
   See "Adding a language" in the README.
 
+### Legal & SEO
+- Terms of Service and Privacy Policy pages (generic templates in all three languages — have them
+  reviewed for your country), consent line on sign-up, footer links, contact e-mail setting.
+- Scan-record retention setting (delete individual scans after N days, no cron needed) and a
+  "Download my data" JSON export on the Account page.
+- Meta description, canonical links, Open Graph / Twitter tags, favicon, touch icon and a social
+  preview image, generated `robots.txt` and `sitemap.xml`; private pages are marked `noindex`.
+
 ### Security
 - Prepared statements everywhere, CSRF tokens, escaped output, `password_hash`, validated
   uploads in a no-execute folder, CSV-formula guard, salted IP hashing.

@@ -106,7 +106,7 @@ dev server; Apache/nginx use the rules below instead.
 
 ### nginx
 
-Point the root at `public` and add the dynamic-QR rewrite:
+Point the root at `public` and add the rewrites that `.htaccess` does on Apache:
 
 ```nginx
 server {
@@ -114,8 +114,15 @@ server {
     root /var/www/qraft/public;
     index index.php;
 
-    location /q/ {
-        rewrite ^/q/([A-Za-z0-9]+)/?$ /q.php?c=$1 last;
+    # Pretty URLs (same as public/.htaccess)
+    rewrite ^/q/([A-Za-z0-9_-]+)/?$ /q.php?c=$1 last;      # dynamic QR codes
+    rewrite ^/b/([A-Za-z0-9_-]+)/?$ /b.php?s=$1 last;      # bio pages
+    rewrite ^/robots\.txt$ /robots.php last;
+    rewrite ^/sitemap\.xml$ /sitemap.php last;
+
+    # nginx ignores .htaccess, so forbid running PHP from the upload folder yourself
+    location ^~ /uploads/ {
+        location ~ \.php$ { return 403; }
     }
 
     location ~ \.php$ {

@@ -97,6 +97,14 @@ tests/               End-to-end test suite (php tests/run.php)
 lang/                Translations (en, ru, uz)
 ```
 
+## Legal pages
+
+`/terms.php` and `/privacy.php` ship as generic templates (English, Russian, Uzbek; text in
+`lang/*.app.php`, keys `terms.*` and `privacy.*`). They are **not legal advice** — adapt them to
+your country and business and bump `LEGAL_UPDATED` in `src/helpers.php`. Set the contact e-mail and
+how long individual scan records are kept in **Admin → Settings**. The site sets only functional
+cookies (session, language), so no cookie banner is required.
+
 ## Adding a language
 
 Each language is three files in `lang/`: `xx.php` (landing, sign-in), `xx.app.php`
