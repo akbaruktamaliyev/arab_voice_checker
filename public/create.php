@@ -26,6 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
     $bg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
 
+    // Optional custom code (slug). Empty → a random code is generated.
+    $slug_in = trim((string) ($_POST['slug'] ?? ''));
+    if ($slug_in !== '') {
+        if (!valid_slug($slug_in)) {
+            $errors[] = 'Custom code: 3–32 letters, digits, hyphens or underscores, starting and ending with a letter or digit.';
+        } else {
+            $dup = $pdo->prepare('SELECT 1 FROM qr_codes WHERE code = ?');
+            $dup->execute([$slug_in]);
+            if ($dup->fetchColumn() !== false) {
+                $errors[] = 'That custom code is already taken — try another.';
+            }
+        }
+    }
+
     $logoPath = null;
     if (!$errors) {
         try {
@@ -36,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
-        $code = generate_code($pdo, (int) config('code_length', 6));
+        $code = $slug_in !== '' ? $slug_in : generate_code($pdo, (int) config('code_length', 6));
         $stmt = $pdo->prepare(
             'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color, logo_path)
              VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -69,6 +83,15 @@ ob_start();
                 <label for="target_url">Destination URL</label>
                 <input type="text" id="target_url" name="target_url"
                        value="<?= e($target_in) ?>" placeholder="https://example.com/menu" required>
+            </div>
+            <div class="field">
+                <label for="slug">Custom code <span class="muted">(optional)</span></label>
+                <input type="text" id="slug" name="slug"
+                       value="<?= e($_POST['slug'] ?? '') ?>" placeholder="e.g. summer-menu"
+                       pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,30}[A-Za-z0-9]" maxlength="32">
+                <p class="muted" style="font-size:.8rem;margin:6px 0 0">
+                    Your link becomes <code><?= e(url('q/')) ?>your-code</code>. Leave blank for a random code.
+                </p>
             </div>
             <div class="row">
                 <div class="field">

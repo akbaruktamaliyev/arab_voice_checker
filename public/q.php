@@ -11,7 +11,7 @@ declare(strict_types=1);
 require __DIR__ . '/../src/bootstrap.php';
 
 $code = (string) ($_GET['c'] ?? '');
-$code = preg_replace('/[^a-zA-Z0-9]/', '', $code);
+$code = preg_replace('/[^A-Za-z0-9_-]/', '', $code);
 
 if ($code === '') {
     http_response_code(404);

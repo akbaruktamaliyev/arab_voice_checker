@@ -18,7 +18,7 @@ host and it runs.
 - Generated entirely in the visitor's browser — nothing is uploaded
 
 **Dynamic QR codes** (SaaS, account required)
-- One short link per code: `yoursite.com/q/XXXXXX`
+- One short link per code: `yoursite.com/q/XXXXXX`, or a custom code like `/q/summer-menu`
 - Change the destination any time — the printed QR never changes
 - Custom colours and a centre logo saved per code; download as PNG or SVG
 - Every scan is counted; pause or delete a code at any point

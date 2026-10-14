@@ -75,6 +75,16 @@ function generate_code(PDO $pdo, int $length): string
 }
 
 /**
+ * Is this a valid custom short code (slug)?
+ * 3–32 chars, letters/digits/hyphen/underscore, must start and end alphanumeric
+ * (so no leading/trailing separators). Used for the /q/{code} link.
+ */
+function valid_slug(string $value): bool
+{
+    return (bool) preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{1,30}[A-Za-z0-9]$/', $value);
+}
+
+/**
  * Validate a hex colour (#rrggbb). Returns the lowercased value, or a fallback.
  */
 function clean_color(string $value, string $fallback): string

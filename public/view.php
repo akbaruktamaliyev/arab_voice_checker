@@ -29,11 +29,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newTarget = clean_url((string) ($_POST['target_url'] ?? ''));
         $newFg = clean_color((string) ($_POST['fg_color'] ?? ''), '#000000');
         $newBg = clean_color((string) ($_POST['bg_color'] ?? ''), '#ffffff');
+        $newSlug = trim((string) ($_POST['slug'] ?? ''));
 
-        // Validate the text fields BEFORE touching any logo file, so a bad
-        // title can never leave the stored logo half-updated.
+        // Validate all text fields BEFORE touching any logo file, so a bad
+        // field can never leave the stored logo half-updated.
+        $errorMsg = null;
         if ($newTitle === '' || mb_strlen($newTitle) > 120 || $newTarget === null) {
-            flash('Please provide a title and a valid http(s) URL.', 'error');
+            $errorMsg = 'Please provide a title and a valid http(s) URL.';
+        } elseif ($newSlug !== $qr['code']) {
+            // The custom code changed — validate format and uniqueness.
+            if (!valid_slug($newSlug)) {
+                $errorMsg = 'Custom code: 3–32 letters, digits, hyphens or underscores, starting and ending with a letter or digit.';
+            } else {
+                $dup = $pdo->prepare('SELECT 1 FROM qr_codes WHERE code = ? AND id <> ?');
+                $dup->execute([$newSlug, $id]);
+                if ($dup->fetchColumn() !== false) {
+                    $errorMsg = 'That custom code is already taken — try another.';
+                }
+            }
+        }
+
+        if ($errorMsg !== null) {
+            flash($errorMsg, 'error');
         } else {
             try {
                 $logoPath = $qr['logo_path'];
@@ -46,10 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logoPath = null;
                 }
                 $u = $pdo->prepare(
-                    'UPDATE qr_codes SET title = ?, target_url = ?, fg_color = ?, bg_color = ?, logo_path = ?
+                    'UPDATE qr_codes SET code = ?, title = ?, target_url = ?, fg_color = ?, bg_color = ?, logo_path = ?
                      WHERE id = ? AND user_id = ?'
                 );
-                $u->execute([$newTitle, $newTarget, $newFg, $newBg, $logoPath, $id, $uid]);
+                $u->execute([$newSlug, $newTitle, $newTarget, $newFg, $newBg, $logoPath, $id, $uid]);
                 flash('Changes saved.', 'success');
             } catch (RuntimeException $e) {
                 // store_logo() failed; the old logo and row are left untouched.
@@ -112,6 +129,14 @@ ob_start();
                 <div class="field">
                     <label for="target_url">Destination URL</label>
                     <input type="text" id="target_url" name="target_url" value="<?= e($qr['target_url']) ?>" required>
+                </div>
+                <div class="field">
+                    <label for="slug">Custom code</label>
+                    <input type="text" id="slug" name="slug" value="<?= e($qr['code']) ?>"
+                           pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,30}[A-Za-z0-9]" maxlength="32" required>
+                    <p class="muted" style="font-size:.8rem;margin:6px 0 0">
+                        Changing this changes the link — any already-printed QR with the old code stops working.
+                    </p>
                 </div>
                 <div class="row">
                     <div class="field">

@@ -17,8 +17,8 @@ declare(strict_types=1);
 
 $uri = urldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 
-// Pretty dynamic-QR link: /q/{code}  ->  q.php?c={code}
-if (preg_match('#^/q/([A-Za-z0-9]+)/?$#', $uri, $m)) {
+// Pretty dynamic-QR link: /q/{code}  ->  q.php?c={code} (allows - and _ too)
+if (preg_match('#^/q/([A-Za-z0-9_-]+)/?$#', $uri, $m)) {
     $_GET['c'] = $m[1];
     require __DIR__ . '/public/q.php';
     return true;

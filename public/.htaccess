@@ -5,8 +5,8 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # /q/ABC123  ->  q.php?c=ABC123
-    RewriteRule ^q/([A-Za-z0-9]+)/?$ q.php?c=$1 [L,QSA]
+    # /q/ABC123  ->  q.php?c=ABC123  (also allows - and _ in custom codes)
+    RewriteRule ^q/([A-Za-z0-9_-]+)/?$ q.php?c=$1 [L,QSA]
 </IfModule>
 
 # Don't serve the raw config or SQL even if the web root is misconfigured.
