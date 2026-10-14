@@ -10,8 +10,40 @@ function json_out(mixed $data, int $status = 200): never
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=UTF-8');
+    header('Content-Language: ' . ($GLOBALS['lang_code'] ?? 'en'));
     echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+/**
+ * Pick the API response language. API clients are stateless, so the session
+ * and cookie are ignored: ?lang=xx wins, then the Accept-Language header, then
+ * the site's default language.
+ */
+function api_pick_language(): void
+{
+    $avail = $GLOBALS['available_langs'] ?? ['en'];
+    $want = (string) ($_GET['lang'] ?? '');
+    if (!in_array($want, $avail, true)) {
+        $want = '';
+        foreach (explode(',', strtolower((string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''))) as $part) {
+            $code = substr(trim($part), 0, 2);
+            if (in_array($code, $avail, true)) { $want = $code; break; }
+        }
+    }
+    if ($want === '') {
+        $want = (string) (setting('default_lang') ?: 'en');
+    }
+    set_language(in_array($want, $avail, true) ? $want : 'en');
+}
+
+/**
+ * Send a localized JSON error: {"error": "<message>", "error_code": "<stable id>"}.
+ * Clients should branch on error_code; the message text depends on the language.
+ */
+function api_error(string $code, int $status): never
+{
+    json_out(['error' => t('api.' . $code), 'error_code' => $code], $status);
 }
 
 /** Extract the bearer token from the request, across server setups. */
@@ -29,15 +61,16 @@ function bearer_token(): ?string
 /** Authenticate the API caller and return their user id, or send 401. */
 function api_user(PDO $pdo): int
 {
+    api_pick_language();
     $token = bearer_token();
     if ($token === null) {
-        json_out(['error' => 'Missing API token. Send: Authorization: Bearer <token>'], 401);
+        api_error('missing_token', 401);
     }
     $stmt = $pdo->prepare('SELECT id, user_id FROM api_tokens WHERE token_hash = ?');
     $stmt->execute([hash('sha256', $token)]);
     $row = $stmt->fetch();
     if (!$row) {
-        json_out(['error' => 'Invalid API token.'], 401);
+        api_error('invalid_token', 401);
     }
     $pdo->prepare('UPDATE api_tokens SET last_used = NOW() WHERE id = ?')->execute([$row['id']]);
 
@@ -45,7 +78,7 @@ function api_user(PDO $pdo): int
     $u = $pdo->prepare('SELECT is_blocked FROM users WHERE id = ?');
     $u->execute([$row['user_id']]);
     if ((int) $u->fetchColumn() === 1) {
-        json_out(['error' => 'Account suspended.'], 403);
+        api_error('suspended', 403);
     }
     return (int) $row['user_id'];
 }

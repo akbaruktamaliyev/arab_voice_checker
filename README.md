@@ -101,7 +101,7 @@ Each language is three files in `lang/`: `xx.php` (landing, sign-in), `xx.app.ph
 to your language code (e.g. `de.php`, `de.app.php`, `de.admin.php`) and translate the
 values — missing keys fall back to English. Text of the default plans lives under
 `dyn:` keys in `en.app.php`; add the same keys to translate plan names and features.
-The installer has its own small string table at the top of `public/install/index.php`; the REST API's JSON errors stay in English.
+The installer has its own small string table at the top of `public/install/index.php`; the REST API's error messages are translated too (see docs/api.md).
 
 ## Security notes
 

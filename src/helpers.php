@@ -18,6 +18,27 @@ function t(string $key, mixed ...$args): string
     return $args ? vsprintf($s, $args) : $s;
 }
 
+/** Load every string file for a language (lang/xx.php, xx.app.php, xx.admin.php). */
+function load_lang_strings(string $code): array
+{
+    $all = [];
+    foreach (['', '.app', '.admin'] as $part) {
+        $file = APP_ROOT . '/lang/' . $code . $part . '.php';
+        if (is_file($file)) {
+            $all = array_merge($all, require $file);
+        }
+    }
+    return $all;
+}
+
+/** Make $code the active language (English fills any key it does not define). */
+function set_language(string $code): void
+{
+    $GLOBALS['lang_code'] = $code;
+    $en = load_lang_strings('en');
+    $GLOBALS['lang'] = $code === 'en' ? $en : array_merge($en, load_lang_strings($code));
+}
+
 /**
  * Translate admin-entered text stored in the database (e.g. plan names and
  * feature lines). Only known default texts have a "dyn:<text>" key; anything

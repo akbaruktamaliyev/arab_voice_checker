@@ -113,25 +113,7 @@ $chosenLang = $_SESSION['lang'] ?? ($_COOKIE['lang'] ?? (setting('default_lang')
 if (!in_array($chosenLang, $availableLangs, true)) {
     $chosenLang = 'en';
 }
-/**
- * Load every string file for a language: lang/xx.php (public site),
- * lang/xx.app.php (signed-in pages) and lang/xx.admin.php (admin panel).
- * Missing parts are skipped, so a new language can be added one file at a time.
- */
-$loadStrings = static function (string $code): array {
-    $all = [];
-    foreach (['', '.app', '.admin'] as $part) {
-        $file = APP_ROOT . '/lang/' . $code . $part . '.php';
-        if (is_file($file)) {
-            $all = array_merge($all, require $file);
-        }
-    }
-    return $all;
-};
-$enStrings = $loadStrings('en');
-$GLOBALS['lang_code'] = $chosenLang;
+// Loads lang/xx.php, xx.app.php and xx.admin.php (see set_language() in helpers.php);
+// English fills any key a translation does not define.
 $GLOBALS['available_langs'] = $availableLangs;
-// Always fall back to English for any key a translation does not define.
-$GLOBALS['lang'] = $chosenLang === 'en'
-    ? $enStrings
-    : array_merge($enStrings, $loadStrings($chosenLang));
+set_language($chosenLang);

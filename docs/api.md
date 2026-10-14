@@ -57,6 +57,22 @@ Returns `{ "deleted": true }`.
 | 409 | Slug already taken |
 | 422 | Validation error |
 
+Every error body is JSON with a human-readable message and a stable machine code:
+
+```json
+{ "error": "Код не найден.", "error_code": "not_found" }
+```
+
+Branch on `error_code` (`missing_token`, `invalid_token`, `suspended`, `not_found`,
+`plan_limit`, `title_required`, `url_required`, `invalid_slug`, `slug_taken`, `need_id`,
+`invalid_url`, `invalid_title`, `nothing`, `method`) — the `error` text is translated.
+
+### Language
+
+Messages come back in English, Russian or Uzbek. Pick one with `?lang=en|ru|uz`, or send
+an `Accept-Language` header; otherwise the site's default language is used. The response
+carries a `Content-Language` header with the language used.
+
 ## Example
 
 ```bash
