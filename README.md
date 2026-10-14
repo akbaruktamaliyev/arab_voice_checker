@@ -12,7 +12,7 @@ host and it runs.
 
 **Free static generator** (no account needed)
 - URL, text, email, phone, SMS, Wi-Fi, vCard, WhatsApp, location, event and crypto
-- Live preview, four sizes, custom QR + background colours
+- Live preview, four sizes, custom colours, gradient fill, dot and eye styles
 - Optional **centre logo** (auto-raises error correction so it still scans)
 - One-click **PNG and SVG** download
 - Generated entirely in the visitor's browser — nothing is uploaded

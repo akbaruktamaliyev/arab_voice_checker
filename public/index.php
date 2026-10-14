@@ -47,6 +47,27 @@ ob_start();
             </div>
             <div class="row">
                 <div class="field">
+                    <label for="qr-dots">Dot style</label>
+                    <select id="qr-dots">
+                        <option value="square">Square</option>
+                        <option value="rounded" selected>Rounded</option>
+                        <option value="dots">Dots</option>
+                        <option value="classy">Classy</option>
+                        <option value="classy-rounded">Classy rounded</option>
+                        <option value="extra-rounded">Extra rounded</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="qr-eyes">Eye style</label>
+                    <select id="qr-eyes">
+                        <option value="square">Square</option>
+                        <option value="extra-rounded" selected>Rounded</option>
+                        <option value="dot">Dot</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="field">
                     <label for="qr-fg">QR colour</label>
                     <input type="color" id="qr-fg" value="#000000">
                 </div>
@@ -54,6 +75,11 @@ ob_start();
                     <label for="qr-bg">Background</label>
                     <input type="color" id="qr-bg" value="#ffffff">
                 </div>
+            </div>
+            <label style="font-weight:400"><input type="checkbox" id="qr-gradient" style="width:auto"> Gradient fill</label>
+            <div class="field" id="qr-fg2-wrap" style="display:none">
+                <label for="qr-fg2">Gradient second colour</label>
+                <input type="color" id="qr-fg2" value="#7c3aed">
             </div>
             <div class="field">
                 <label for="qr-logo">Centre logo <span class="muted">(optional)</span></label>
@@ -64,9 +90,8 @@ ob_start();
         </div>
 
         <div class="card stack center">
-            <div class="qr-preview" id="qr-holder">
-                <span class="muted">Fill in the fields to see your QR code</span>
-            </div>
+            <div class="qr-preview" id="qr-holder"></div>
+            <span class="muted" id="qr-hint">Fill in the fields to see your QR code</span>
             <div class="row">
                 <button type="button" id="qr-download-png" class="btn btn-primary" disabled>Download PNG</button>
                 <button type="button" id="qr-download-svg" class="btn btn-ghost" disabled>Download SVG</button>
@@ -91,8 +116,7 @@ ob_start();
     </div>
 </section>
 
-<script src="<?= e(url('assets/js/qrcode-generator.min.js')) ?>"></script>
-<script src="<?= e(url('assets/js/qrender.js')) ?>"></script>
+<script src="<?= e(url('assets/js/qr-code-styling.js')) ?>"></script>
 <script src="<?= e(url('assets/js/app.js')) ?>"></script>
 <?php
 $content = ob_get_clean();
