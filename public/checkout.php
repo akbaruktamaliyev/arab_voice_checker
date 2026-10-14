@@ -42,6 +42,9 @@ $secret = trim((string) setting('stripe_secret', ''));
 if ($secret === '') {
     checkout_message('Payments not configured', 'The store owner has not connected Stripe yet. Add Stripe keys in the admin settings.');
 }
+if (!function_exists('curl_init')) {
+    checkout_message('Checkout unavailable', 'The server is missing the PHP cURL extension required for payments.');
+}
 
 // Create a Checkout Session via the Stripe API.
 $user = current_user($pdo);

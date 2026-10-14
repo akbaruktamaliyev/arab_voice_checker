@@ -33,6 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('bulk.php');
     }
 
+    // Respect the plan's dynamic-code limit across the whole import.
+    $plan = user_plan($pdo, $uid);
+    $planCodes = $plan['max_codes'] === null ? null : (int) $plan['max_codes'];
+    $have = (int) $pdo->query('SELECT COUNT(*) FROM qr_codes WHERE user_id = ' . $uid)->fetchColumn();
+
     $created = 0;
     $errors = [];
     $rowNo = 0;
@@ -44,13 +49,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Stopped at row $MAX (import limit).";
             break;
         }
-        // Skip a header row ("title,target_url,...").
-        if (!$seenHeader && isset($row[0]) && preg_match('/title/i', (string) $row[0])
-            && isset($row[1]) && preg_match('/url|target/i', (string) $row[1])) {
+        // Skip a header row — only when the cells are exactly the column names.
+        if (!$seenHeader && isset($row[0], $row[1])
+            && strcasecmp(trim((string) $row[0]), 'title') === 0
+            && preg_match('/^(target_?url|url)$/i', trim((string) $row[1]))) {
             $seenHeader = true;
             continue;
         }
         $seenHeader = true;
+
+        if (!within_limit($planCodes, $have)) {
+            $errors[] = "Plan limit reached ({$plan['name']}: {$planCodes}). Remaining rows skipped.";
+            break;
+        }
 
         $title = trim((string) ($row[0] ?? ''));
         $target = clean_url((string) ($row[1] ?? ''));
@@ -86,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare('INSERT INTO qr_codes (user_id, code, title, target_url) VALUES (?, ?, ?, ?)')
             ->execute([$uid, $code, $title, $target]);
         $created++;
+        $have++;
     }
     fclose($handle);
 

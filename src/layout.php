@@ -68,8 +68,13 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
     <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <p style="margin:0">&copy; <?= date('Y') ?> <?= e($appName) ?></p>
         <nav style="display:flex;gap:10px;font-size:.85rem">
-            <?php foreach (($GLOBALS['available_langs'] ?? ['en']) as $lc): ?>
-                <a href="?setlang=<?= e($lc) ?>" style="<?= lang_code() === $lc ? 'font-weight:700' : '' ?>"><?= e(strtoupper($lc)) ?></a>
+            <?php
+                // Preserve the current query string when switching language.
+                $qs = $_GET; unset($qs['setlang']);
+                foreach (($GLOBALS['available_langs'] ?? ['en']) as $lc):
+                    $href = '?' . http_build_query($qs + ['setlang' => $lc]);
+            ?>
+                <a href="<?= e($href) ?>" style="<?= lang_code() === $lc ? 'font-weight:700' : '' ?>"><?= e(strtoupper($lc)) ?></a>
             <?php endforeach; ?>
         </nav>
     </div>

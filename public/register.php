@@ -68,11 +68,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($mustVerify) {
                 $link = url('verify.php?token=' . $verifyToken);
-                send_mail($email, app_name() . ' — confirm your email',
+                $okMail = send_mail($email, app_name() . ' — confirm your email',
                     '<p>Confirm your email for ' . e(app_name()) . ':</p>'
                     . '<p><a href="' . e($link) . '">' . e($link) . '</a></p>');
-                flash('Almost there — check your email to confirm your account.', 'success');
-                redirect('login.php');
+                if ($okMail) {
+                    flash('Almost there — check your email to confirm your account.', 'success');
+                    redirect('login.php');
+                }
+                // The verification email could not be sent — don't strand the
+                // account: verify it now so the user can sign in.
+                $pdo->prepare('UPDATE users SET is_verified = 1, verify_token = NULL WHERE id = ?')
+                    ->execute([$newId]);
             }
 
             login_user($newId);
