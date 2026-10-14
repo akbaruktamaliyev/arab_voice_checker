@@ -57,11 +57,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         try {
+            $mustVerify = setting('require_email_verification', '0') === '1' && mail_enabled();
+            $verifyToken = $mustVerify ? bin2hex(random_bytes(32)) : null;
+
             $stmt = $pdo->prepare(
-                'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
+                'INSERT INTO users (name, email, password_hash, is_verified, verify_token) VALUES (?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
-            login_user((int) $pdo->lastInsertId());
+            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT), $mustVerify ? 0 : 1, $verifyToken]);
+            $newId = (int) $pdo->lastInsertId();
+
+            if ($mustVerify) {
+                $link = url('verify.php?token=' . $verifyToken);
+                send_mail($email, app_name() . ' — confirm your email',
+                    '<p>Confirm your email for ' . e(app_name()) . ':</p>'
+                    . '<p><a href="' . e($link) . '">' . e($link) . '</a></p>');
+                flash('Almost there — check your email to confirm your account.', 'success');
+                redirect('login.php');
+            }
+
+            login_user($newId);
             flash('Welcome to ' . app_name() . '! Your account is ready.', 'success');
             redirect('dashboard.php');
         } catch (PDOException $e) {

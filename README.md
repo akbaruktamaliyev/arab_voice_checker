@@ -22,9 +22,10 @@ host and it runs.
 - List, create, update and delete dynamic codes over JSON — e.g.
   `curl /api/codes.php -H "Authorization: Bearer <token>"`
 
-**Admin & setup**
+**Accounts & admin**
 - Web installer: database setup, schema import and admin creation from the browser
 - Admin panel: user management (suspend, promote, delete) and site settings
+- Password reset and optional email verification over SMTP (dependency-free mailer)
 - Configurable site name, registration toggle and SMTP, all from the admin UI
 - Light / dark theme with a one-click toggle
 
