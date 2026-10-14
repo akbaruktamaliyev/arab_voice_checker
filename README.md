@@ -26,7 +26,8 @@ host and it runs.
 **Dynamic QR codes** (SaaS, account required)
 - One short link per code: `yoursite.com/q/XXXXXX`, or a custom code like `/q/summer-menu`
 - Change the destination any time — the printed QR never changes
-- Custom colours and a centre logo saved per code; download as PNG or SVG
+- Custom colours and a centre logo saved per code; download as PNG, SVG or PDF
+- Organise codes into folders and filter the dashboard by folder
 - Optional protection per code: password, expiry date and scan limit
 - Every scan is counted; pause or delete a code at any point
 - Per-code analytics: 14-day chart plus device / OS / browser breakdown

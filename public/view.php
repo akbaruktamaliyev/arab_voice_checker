@@ -73,13 +73,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $expires   = parse_expiry((string) ($_POST['expires_at'] ?? ''));
                 $scanLimit = parse_scan_limit((string) ($_POST['scan_limit'] ?? ''));
 
+                $folderId = null;
+                if (($_POST['folder_id'] ?? '') !== '' && ctype_digit((string) $_POST['folder_id'])) {
+                    $chk = $pdo->prepare('SELECT 1 FROM folders WHERE id = ? AND user_id = ?');
+                    $chk->execute([(int) $_POST['folder_id'], $uid]);
+                    if ($chk->fetchColumn() !== false) {
+                        $folderId = (int) $_POST['folder_id'];
+                    }
+                }
+
                 $u = $pdo->prepare(
                     'UPDATE qr_codes SET code = ?, title = ?, target_url = ?, fg_color = ?, bg_color = ?,
-                        logo_path = ?, password_hash = ?, expires_at = ?, scan_limit = ?
+                        logo_path = ?, password_hash = ?, expires_at = ?, scan_limit = ?, folder_id = ?
                      WHERE id = ? AND user_id = ?'
                 );
                 $u->execute([$newSlug, $newTitle, $newTarget, $newFg, $newBg, $logoPath,
-                             $pwHash, $expires, $scanLimit, $id, $uid]);
+                             $pwHash, $expires, $scanLimit, $folderId, $id, $uid]);
                 flash('Changes saved.', 'success');
             } catch (RuntimeException $e) {
                 // store_logo() failed; the old logo and row are left untouched.
@@ -126,6 +135,10 @@ $byDevice  = breakdown($pdo, $id, 'device');
 $byOs      = breakdown($pdo, $id, 'os');
 $byBrowser = breakdown($pdo, $id, 'browser');
 
+$myFolders = $pdo->prepare('SELECT id, name FROM folders WHERE user_id = ? ORDER BY name');
+$myFolders->execute([$uid]);
+$myFolders = $myFolders->fetchAll();
+
 $shortUrl = url('q/' . $qr['code']);
 $logoUrl  = $qr['logo_path'] ? url($qr['logo_path']) : null;
 $title = $qr['title'];
@@ -137,8 +150,9 @@ ob_start();
     <div class="card stack center">
         <div class="qr-preview" id="qr-holder"></div>
         <div class="row">
-            <button type="button" id="qr-download-png" class="btn btn-primary">Download PNG</button>
-            <button type="button" id="qr-download-svg" class="btn btn-ghost">Download SVG</button>
+            <button type="button" id="qr-download-png" class="btn btn-primary">PNG</button>
+            <button type="button" id="qr-download-svg" class="btn btn-ghost">SVG</button>
+            <button type="button" id="qr-download-pdf" class="btn btn-ghost">PDF</button>
         </div>
         <div class="muted" style="font-size:.85rem;word-break:break-all"><?= e($shortUrl) ?></div>
     </div>
@@ -157,6 +171,17 @@ ob_start();
                     <label for="target_url">Destination URL</label>
                     <input type="text" id="target_url" name="target_url" value="<?= e($qr['target_url']) ?>" required>
                 </div>
+                <?php if ($myFolders): ?>
+                <div class="field">
+                    <label for="folder_id">Folder</label>
+                    <select id="folder_id" name="folder_id">
+                        <option value="">No folder</option>
+                        <?php foreach ($myFolders as $f): ?>
+                            <option value="<?= (int) $f['id'] ?>" <?= (string) $qr['folder_id'] === (string) $f['id'] ? 'selected' : '' ?>><?= e($f['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
                 <div class="field">
                     <label for="slug">Custom code</label>
                     <input type="text" id="slug" name="slug" value="<?= e($qr['code']) ?>"
@@ -328,6 +353,29 @@ ob_start();
         pngBtn.addEventListener('click', function () {
             QRaftRender.downloadPng(qr, 512, fg.value, bg.value, name, logoImg);
         });
+
+        // PDF: lazy-load jsPDF on first click, then compose a one-page sheet.
+        var jspdfUrl = <?= json_encode(url('assets/js/jspdf.umd.min.js')) ?>;
+        function withJsPDF(cb) {
+            if (window.jspdf && window.jspdf.jsPDF) { cb(); return; }
+            var s = document.createElement('script');
+            s.src = jspdfUrl; s.onload = cb; document.head.appendChild(s);
+        }
+        document.getElementById('qr-download-pdf').addEventListener('click', function () {
+            withJsPDF(function () {
+                var canvas = QRaftRender.toCanvas(qr, 1000, fg.value, bg.value, logoImg);
+                var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+                var pw = doc.internal.pageSize.getWidth();
+                doc.setFontSize(18);
+                doc.text(<?= json_encode($qr['title']) ?>, pw / 2, 30, { align: 'center' });
+                var size = 100;
+                doc.addImage(canvas.toDataURL('image/png'), 'PNG', (pw - size) / 2, 45, size, size);
+                doc.setFontSize(11); doc.setTextColor(120);
+                doc.text(url, pw / 2, 160, { align: 'center' });
+                doc.save(name + '.pdf');
+            });
+        });
+
         svgBtn.addEventListener('click', function () {
             // Fetch the logo only now (on demand) and inline it for a
             // self-contained SVG — nothing is base64-encoded on page load.

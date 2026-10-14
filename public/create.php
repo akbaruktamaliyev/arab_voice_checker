@@ -40,6 +40,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Optional folder (must belong to the user).
+    $folderId = null;
+    if (($_POST['folder_id'] ?? '') !== '' && ctype_digit((string) $_POST['folder_id'])) {
+        $chk = $pdo->prepare('SELECT 1 FROM folders WHERE id = ? AND user_id = ?');
+        $chk->execute([(int) $_POST['folder_id'], current_user_id()]);
+        if ($chk->fetchColumn() !== false) {
+            $folderId = (int) $_POST['folder_id'];
+        }
+    }
+
     // Optional protection.
     $pw        = (string) ($_POST['password'] ?? '');
     $pwHash    = $pw !== '' ? password_hash($pw, PASSWORD_DEFAULT) : null;
@@ -58,14 +68,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         $code = $slug_in !== '' ? $slug_in : generate_code($pdo, (int) config('code_length', 6));
         $stmt = $pdo->prepare(
-            'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color, logo_path, password_hash, expires_at, scan_limit)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO qr_codes (user_id, folder_id, code, title, target_url, fg_color, bg_color, logo_path, password_hash, expires_at, scan_limit)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([current_user_id(), $code, $title_in, $target, $fg, $bg, $logoPath, $pwHash, $expires, $scanLimit]);
+        $stmt->execute([current_user_id(), $folderId, $code, $title_in, $target, $fg, $bg, $logoPath, $pwHash, $expires, $scanLimit]);
         flash('Dynamic QR code created.', 'success');
         redirect('view.php?id=' . (int) $pdo->lastInsertId());
     }
 }
+
+$myFolders = $pdo->prepare('SELECT id, name FROM folders WHERE user_id = ? ORDER BY name');
+$myFolders->execute([current_user_id()]);
+$myFolders = $myFolders->fetchAll();
 
 $title = 'New dynamic QR';
 ob_start();
@@ -90,6 +104,17 @@ ob_start();
                 <input type="text" id="target_url" name="target_url"
                        value="<?= e($target_in) ?>" placeholder="https://example.com/menu" required>
             </div>
+            <?php if ($myFolders): ?>
+            <div class="field">
+                <label for="folder_id">Folder <span class="muted">(optional)</span></label>
+                <select id="folder_id" name="folder_id">
+                    <option value="">No folder</option>
+                    <?php foreach ($myFolders as $f): ?>
+                        <option value="<?= (int) $f['id'] ?>" <?= ($_POST['folder_id'] ?? '') == $f['id'] ? 'selected' : '' ?>><?= e($f['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
             <div class="field">
                 <label for="slug">Custom code <span class="muted">(optional)</span></label>
                 <input type="text" id="slug" name="slug"
