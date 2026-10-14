@@ -25,52 +25,64 @@
     var logoDataUrl = null;
     var qr = null;
 
+    // Field captions come from the server (window.QRAFT_I18N, built from the
+    // active language); the English text here is only a fallback.
+    var I18N = window.QRAFT_I18N || {};
+    function L(key, fallback) { return I18N[key] || fallback; }
+    var OPT = L('optional', 'Optional');
+    var PHONE_PH = '+998 90 123 45 67';
+
     var TYPES = {
-        url:   [{ name: 'url', label: 'Website URL', type: 'url', ph: 'https://example.com' }],
-        text:  [{ name: 'text', label: 'Text', type: 'text', ph: 'Any text you like' }],
+        url:   [{ name: 'url', label: L('website_url', 'Website URL'), type: 'url', ph: 'https://example.com' }],
+        text:  [{ name: 'text', label: L('text', 'Text'), type: 'text', ph: L('text_ph', 'Any text you like') }],
         email: [
-            { name: 'to', label: 'Email address', type: 'email', ph: 'hello@example.com' },
-            { name: 'subject', label: 'Subject', type: 'text', ph: 'Optional' },
-            { name: 'body', label: 'Message', type: 'text', ph: 'Optional' }
+            { name: 'to', label: L('email_addr', 'Email address'), type: 'email', ph: 'hello@example.com' },
+            { name: 'subject', label: L('subject', 'Subject'), type: 'text', ph: OPT },
+            { name: 'body', label: L('message', 'Message'), type: 'text', ph: OPT }
         ],
-        phone: [{ name: 'phone', label: 'Phone number', type: 'text', ph: '+998 90 123 45 67' }],
+        phone: [{ name: 'phone', label: L('phone_num', 'Phone number'), type: 'text', ph: PHONE_PH }],
         sms:   [
-            { name: 'phone', label: 'Phone number', type: 'text', ph: '+998 90 123 45 67' },
-            { name: 'text', label: 'Message', type: 'text', ph: 'Optional' }
+            { name: 'phone', label: L('phone_num', 'Phone number'), type: 'text', ph: PHONE_PH },
+            { name: 'text', label: L('message', 'Message'), type: 'text', ph: OPT }
         ],
         wifi:  [
-            { name: 'ssid', label: 'Network name (SSID)', type: 'text', ph: 'MyWiFi' },
-            { name: 'password', label: 'Password', type: 'text', ph: '' },
-            { name: 'enc', label: 'Security', type: 'select', options: ['WPA', 'WEP', 'nopass'] }
+            { name: 'ssid', label: L('ssid', 'Network name (SSID)'), type: 'text', ph: 'MyWiFi' },
+            { name: 'password', label: L('password', 'Password'), type: 'text', ph: '' },
+            { name: 'enc', label: L('security', 'Security'), type: 'select', options: ['WPA', 'WEP', 'nopass'] }
         ],
         vcard: [
-            { name: 'name', label: 'Full name', type: 'text', ph: 'John Doe' },
-            { name: 'org', label: 'Company', type: 'text', ph: 'Optional' },
-            { name: 'phone', label: 'Phone', type: 'text', ph: 'Optional' },
-            { name: 'email', label: 'Email', type: 'email', ph: 'Optional' },
-            { name: 'url', label: 'Website', type: 'text', ph: 'Optional' }
+            { name: 'name', label: L('full_name', 'Full name'), type: 'text', ph: L('name_ph', 'John Doe') },
+            { name: 'org', label: L('company', 'Company'), type: 'text', ph: OPT },
+            { name: 'phone', label: L('phone', 'Phone'), type: 'text', ph: OPT },
+            { name: 'email', label: L('email', 'Email'), type: 'email', ph: OPT },
+            { name: 'url', label: L('website', 'Website'), type: 'text', ph: OPT }
         ],
         whatsapp: [
-            { name: 'phone', label: 'Phone (with country code, no +)', type: 'text', ph: '998901234567' },
-            { name: 'text', label: 'Message', type: 'text', ph: 'Optional' }
+            { name: 'phone', label: L('wa_phone', 'Phone (with country code, no +)'), type: 'text', ph: '998901234567' },
+            { name: 'text', label: L('message', 'Message'), type: 'text', ph: OPT }
         ],
         geo: [
-            { name: 'lat', label: 'Latitude', type: 'text', ph: '41.311081' },
-            { name: 'lng', label: 'Longitude', type: 'text', ph: '69.240562' }
+            { name: 'lat', label: L('lat', 'Latitude'), type: 'text', ph: '41.311081' },
+            { name: 'lng', label: L('lng', 'Longitude'), type: 'text', ph: '69.240562' }
         ],
         event: [
-            { name: 'summary', label: 'Event title', type: 'text', ph: 'Meeting' },
-            { name: 'location', label: 'Location', type: 'text', ph: 'Optional' },
-            { name: 'start', label: 'Starts', type: 'datetime' },
-            { name: 'end', label: 'Ends', type: 'datetime' }
+            { name: 'summary', label: L('event_title', 'Event title'), type: 'text', ph: L('event_ph', 'Meeting') },
+            { name: 'location', label: L('location', 'Location'), type: 'text', ph: OPT },
+            { name: 'start', label: L('starts', 'Starts'), type: 'datetime' },
+            { name: 'end', label: L('ends', 'Ends'), type: 'datetime' }
         ],
         crypto: [
-            { name: 'coin', label: 'Coin', type: 'select', options: ['bitcoin', 'ethereum', 'litecoin'] },
-            { name: 'address', label: 'Wallet address', type: 'text', ph: 'Address' },
-            { name: 'amount', label: 'Amount', type: 'text', ph: 'Optional' }
+            { name: 'coin', label: L('coin', 'Coin'), type: 'select', options: ['bitcoin', 'ethereum', 'litecoin'] },
+            { name: 'address', label: L('wallet', 'Wallet address'), type: 'text', ph: L('address_ph', 'Address') },
+            { name: 'amount', label: L('amount', 'Amount'), type: 'text', ph: OPT }
         ]
     };
 
+    // Display names for <select> option values (the values themselves never change).
+    var OPTION_LABELS = {
+        nopass: L('nopass', 'No password'),
+        bitcoin: 'Bitcoin', ethereum: 'Ethereum', litecoin: 'Litecoin'
+    };
     function icalTime(v) { return (v || '').replace(/[-:]/g, '') + '00'; }
     function esc(v) { return (v || '').replace(/([\\;,:"])/g, '\\$1'); }
 
@@ -200,7 +212,7 @@
                 input = document.createElement('select');
                 d.options.forEach(function (o) {
                     var opt = document.createElement('option');
-                    opt.value = o; opt.textContent = o === 'nopass' ? 'No password' : o;
+                    opt.value = o; opt.textContent = OPTION_LABELS[o] || o;
                     input.appendChild(opt);
                 });
             } else {

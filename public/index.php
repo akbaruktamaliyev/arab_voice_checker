@@ -21,47 +21,47 @@ ob_start();
             <div class="field">
                 <label for="qr-type"><?= e(t('gen.contains')) ?></label>
                 <select id="qr-type">
-                    <option value="url">Website link</option>
-                    <option value="text">Plain text</option>
-                    <option value="email">Email</option>
-                    <option value="phone">Phone number</option>
-                    <option value="sms">SMS</option>
-                    <option value="wifi">Wi-Fi network</option>
-                    <option value="vcard">Contact card (vCard)</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="geo">Location (GPS)</option>
-                    <option value="event">Calendar event</option>
-                    <option value="crypto">Crypto payment</option>
+                    <option value="url"><?= e(t('gen.t.url')) ?></option>
+                    <option value="text"><?= e(t('gen.t.text')) ?></option>
+                    <option value="email"><?= e(t('gen.t.email')) ?></option>
+                    <option value="phone"><?= e(t('gen.t.phone')) ?></option>
+                    <option value="sms"><?= e(t('gen.t.sms')) ?></option>
+                    <option value="wifi"><?= e(t('gen.t.wifi')) ?></option>
+                    <option value="vcard"><?= e(t('gen.t.vcard')) ?></option>
+                    <option value="whatsapp"><?= e(t('gen.t.whatsapp')) ?></option>
+                    <option value="geo"><?= e(t('gen.t.geo')) ?></option>
+                    <option value="event"><?= e(t('gen.t.event')) ?></option>
+                    <option value="crypto"><?= e(t('gen.t.crypto')) ?></option>
                 </select>
             </div>
             <div id="qr-fields"></div>
             <div class="field">
                 <label for="qr-size"><?= e(t('gen.size')) ?></label>
                 <select id="qr-size">
-                    <option value="192">Small (192px)</option>
-                    <option value="256" selected>Medium (256px)</option>
-                    <option value="384">Large (384px)</option>
-                    <option value="512">Extra large (512px)</option>
+                    <option value="192"><?= e(t('gen.size.small')) ?></option>
+                    <option value="256" selected><?= e(t('gen.size.medium')) ?></option>
+                    <option value="384"><?= e(t('gen.size.large')) ?></option>
+                    <option value="512"><?= e(t('gen.size.xl')) ?></option>
                 </select>
             </div>
             <div class="row">
                 <div class="field">
                     <label for="qr-dots"><?= e(t('gen.dotstyle')) ?></label>
                     <select id="qr-dots">
-                        <option value="square">Square</option>
-                        <option value="rounded" selected>Rounded</option>
-                        <option value="dots">Dots</option>
-                        <option value="classy">Classy</option>
-                        <option value="classy-rounded">Classy rounded</option>
-                        <option value="extra-rounded">Extra rounded</option>
+                        <option value="square"><?= e(t('gen.dot.square')) ?></option>
+                        <option value="rounded" selected><?= e(t('gen.dot.rounded')) ?></option>
+                        <option value="dots"><?= e(t('gen.dot.dots')) ?></option>
+                        <option value="classy"><?= e(t('gen.dot.classy')) ?></option>
+                        <option value="classy-rounded"><?= e(t('gen.dot.classy-rounded')) ?></option>
+                        <option value="extra-rounded"><?= e(t('gen.dot.extra-rounded')) ?></option>
                     </select>
                 </div>
                 <div class="field">
                     <label for="qr-eyes"><?= e(t('gen.eyestyle')) ?></label>
                     <select id="qr-eyes">
-                        <option value="square">Square</option>
-                        <option value="extra-rounded" selected>Rounded</option>
-                        <option value="dot">Dot</option>
+                        <option value="square"><?= e(t('gen.eye.square')) ?></option>
+                        <option value="extra-rounded" selected><?= e(t('gen.eye.rounded')) ?></option>
+                        <option value="dot"><?= e(t('gen.eye.dot')) ?></option>
                     </select>
                 </div>
             </div>
@@ -116,6 +116,14 @@ ob_start();
     </div>
 </section>
 
+<?php
+// Field captions for the generator script (see TYPES in assets/js/app.js).
+$genStrings = [];
+foreach ($GLOBALS['lang'] as $k => $v) {
+    if (str_starts_with($k, 'gen.f.')) { $genStrings[substr($k, 6)] = $v; }
+}
+?>
+<script>window.QRAFT_I18N = <?= json_encode($genStrings, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <script src="<?= e(url('assets/js/qr-code-styling.js')) ?>"></script>
 <script src="<?= e(url('assets/js/app.js')) ?>"></script>
 <?php
