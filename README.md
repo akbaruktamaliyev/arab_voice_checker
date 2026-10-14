@@ -34,6 +34,7 @@ host and it runs.
 - Change the destination any time — the printed QR never changes
 - Custom colours and a centre logo saved per code; download as PNG, SVG or PDF
 - Organise codes into folders; bulk-create many codes from a CSV
+- Bio pages: a hosted Linktree-style link page per handle, with themes
 - Optional protection per code: password, expiry date and scan limit
 - Every scan is counted; pause or delete a code at any point
 - Per-code analytics: 14-day chart plus device / OS / browser breakdown

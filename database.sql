@@ -88,6 +88,35 @@ CREATE TABLE IF NOT EXISTS `qr_scans` (
         REFERENCES `qr_codes` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Bio link pages (Linktree-style) -------------------------------------
+CREATE TABLE IF NOT EXISTS `bio_pages` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id`    INT UNSIGNED NOT NULL,
+    `slug`       VARCHAR(40)  NOT NULL,
+    `title`      VARCHAR(120) NOT NULL,
+    `headline`   VARCHAR(200) NULL,
+    `theme`      VARCHAR(16)  NOT NULL DEFAULT 'light',
+    `views`      INT UNSIGNED NOT NULL DEFAULT 0,
+    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_bio_slug` (`slug`),
+    KEY `idx_bio_user` (`user_id`),
+    CONSTRAINT `fk_bio_user` FOREIGN KEY (`user_id`)
+        REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `bio_links` (
+    `id`      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `bio_id`  INT UNSIGNED NOT NULL,
+    `label`   VARCHAR(120) NOT NULL,
+    `url`     VARCHAR(2048) NOT NULL,
+    `sort`    INT          NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `idx_biolink_bio` (`bio_id`),
+    CONSTRAINT `fk_biolink_bio` FOREIGN KEY (`bio_id`)
+        REFERENCES `bio_pages` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- API tokens (REST API) ------------------------------------------------
 CREATE TABLE IF NOT EXISTS `api_tokens` (
     `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,

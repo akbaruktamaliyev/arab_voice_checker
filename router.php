@@ -24,6 +24,13 @@ if (preg_match('#^/q/([A-Za-z0-9_-]+)/?$#', $uri, $m)) {
     return true;
 }
 
+// Public bio page: /b/{slug} -> b.php?s={slug}
+if (preg_match('#^/b/([A-Za-z0-9_-]+)/?$#', $uri, $m)) {
+    $_GET['s'] = $m[1];
+    require __DIR__ . '/public/b.php';
+    return true;
+}
+
 // Let the built-in server serve any real file in the document root as-is.
 $file = __DIR__ . '/public' . $uri;
 if ($uri !== '/' && is_file($file)) {
