@@ -96,28 +96,28 @@ ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">
     <div class="card stack">
-        <h1 style="margin:0">Create your account</h1>
+        <h1 style="margin:0"><?= e(t('auth.create_account')) ?></h1>
         <?php foreach ($errors as $err): ?>
             <div class="flash flash-error"><?= e($err) ?></div>
         <?php endforeach; ?>
         <form method="post" class="stack">
             <?= csrf_field() ?>
             <div class="field">
-                <label for="name">Name</label>
+                <label for="name"><?= e(t('auth.name')) ?></label>
                 <input type="text" id="name" name="name" value="<?= e($name) ?>" required>
             </div>
             <div class="field">
-                <label for="email">Email</label>
+                <label for="email"><?= e(t('auth.email')) ?></label>
                 <input type="email" id="email" name="email" value="<?= e($email) ?>" required>
             </div>
             <div class="field">
-                <label for="password">Password</label>
+                <label for="password"><?= e(t('auth.password')) ?></label>
                 <input type="password" id="password" name="password" minlength="8" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Create account</button>
+            <button type="submit" class="btn btn-primary btn-block"><?= e(t('auth.create_account')) ?></button>
         </form>
-        <p class="muted center">Already have an account?
-            <a href="<?= e(url('login.php')) ?>">Sign in</a>
+        <p class="muted center"><?= e(t('auth.have_account')) ?>
+            <a href="<?= e(url('login.php')) ?>"><?= e(t('auth.signin')) ?></a>
         </p>
     </div>
 </section>

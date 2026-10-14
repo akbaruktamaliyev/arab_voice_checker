@@ -25,16 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($user && password_verify($pass, $user['password_hash'])) {
         if ((int) $user['is_blocked'] === 1) {
-            $error = 'Your account has been suspended.';
+            $error = t('auth.suspended');
         } elseif (setting('require_email_verification', '0') === '1' && (int) $user['is_verified'] === 0) {
-            $error = 'Please confirm your email before signing in.';
+            $error = t('auth.verify_first');
         } else {
             login_user((int) $user['id']);
             redirect('dashboard.php');
         }
     } else {
         // Same message whether the email or the password was wrong.
-        $error = 'Invalid email or password.';
+        $error = t('auth.invalid');
     }
 }
 
@@ -43,27 +43,27 @@ ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">
     <div class="card stack">
-        <h1 style="margin:0">Welcome back</h1>
+        <h1 style="margin:0"><?= e(t('auth.welcome_back')) ?></h1>
         <?php if ($error): ?>
             <div class="flash flash-error"><?= e($error) ?></div>
         <?php endif; ?>
         <form method="post" class="stack">
             <?= csrf_field() ?>
             <div class="field">
-                <label for="email">Email</label>
+                <label for="email"><?= e(t('auth.email')) ?></label>
                 <input type="email" id="email" name="email" value="<?= e($email) ?>" required>
             </div>
             <div class="field">
-                <label for="password">Password</label>
+                <label for="password"><?= e(t('auth.password')) ?></label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+            <button type="submit" class="btn btn-primary btn-block"><?= e(t('auth.signin')) ?></button>
         </form>
         <p class="muted center" style="margin-bottom:0">
-            <a href="<?= e(url('forgot.php')) ?>">Forgot password?</a>
+            <a href="<?= e(url('forgot.php')) ?>"><?= e(t('auth.forgot')) ?></a>
         </p>
-        <p class="muted center">No account yet?
-            <a href="<?= e(url('register.php')) ?>">Create one</a>
+        <p class="muted center"><?= e(t('auth.no_account')) ?>
+            <a href="<?= e(url('register.php')) ?>"><?= e(t('auth.create_one')) ?></a>
         </p>
     </div>
 </section>

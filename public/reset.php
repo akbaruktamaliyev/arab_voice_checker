@@ -41,20 +41,20 @@ ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">
     <div class="card stack">
-        <h1 style="margin:0">Set a new password</h1>
+        <h1 style="margin:0"><?= e(t('reset.title')) ?></h1>
         <?php if (!$user): ?>
-            <div class="flash flash-error">This reset link is invalid or has expired.</div>
-            <a class="btn btn-ghost" href="<?= e(url('forgot.php')) ?>">Request a new link</a>
+            <div class="flash flash-error"><?= e(t('reset.invalid')) ?></div>
+            <a class="btn btn-ghost" href="<?= e(url('forgot.php')) ?>"><?= e(t('reset.request')) ?></a>
         <?php else: ?>
             <?php foreach ($errors as $err): ?><div class="flash flash-error"><?= e($err) ?></div><?php endforeach; ?>
             <form method="post" class="stack">
                 <?= csrf_field() ?>
                 <input type="hidden" name="token" value="<?= e($token) ?>">
                 <div class="field">
-                    <label for="password">New password</label>
+                    <label for="password"><?= e(t('reset.new')) ?></label>
                     <input type="password" id="password" name="password" minlength="8" required autofocus>
                 </div>
-                <button class="btn btn-primary btn-block">Update password</button>
+                <button class="btn btn-primary btn-block"><?= e(t('reset.update')) ?></button>
             </form>
         <?php endif; ?>
     </div>

@@ -18,7 +18,7 @@ $viewer   = $uid !== null ? current_user($pdo) : null;
 $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= e(lang_code()) ?>" dir="<?= is_rtl() ? 'rtl' : 'ltr' ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -39,16 +39,16 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
             <span class="brand-mark">▦</span> <?= e($appName) ?>
         </a>
         <nav class="nav">
-            <a href="<?= e(url('index.php')) ?>">Generator</a>
+            <a href="<?= e(url('index.php')) ?>"><?= e(t('nav.generator')) ?></a>
             <?php if ($uid !== null): ?>
-                <a href="<?= e(url('dashboard.php')) ?>">Dashboard</a>
+                <a href="<?= e(url('dashboard.php')) ?>"><?= e(t('nav.dashboard')) ?></a>
                 <?php if ($isAdmin): ?>
-                    <a href="<?= e(url('admin/index.php')) ?>">Admin</a>
+                    <a href="<?= e(url('admin/index.php')) ?>"><?= e(t('nav.admin')) ?></a>
                 <?php endif; ?>
-                <a class="btn btn-ghost" href="<?= e(url('logout.php')) ?>">Sign out</a>
+                <a class="btn btn-ghost" href="<?= e(url('logout.php')) ?>"><?= e(t('nav.signout')) ?></a>
             <?php else: ?>
-                <a href="<?= e(url('login.php')) ?>">Sign in</a>
-                <a class="btn btn-primary" href="<?= e(url('register.php')) ?>">Get started</a>
+                <a href="<?= e(url('login.php')) ?>"><?= e(t('nav.signin')) ?></a>
+                <a class="btn btn-primary" href="<?= e(url('register.php')) ?>"><?= e(t('nav.getstarted')) ?></a>
             <?php endif; ?>
             <button type="button" id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
         </nav>
@@ -64,8 +64,13 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
 </main>
 
 <footer class="site-footer">
-    <div class="wrap">
-        <p>&copy; <?= date('Y') ?> <?= e($appName) ?>. Built with QRaft.</p>
+    <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <p style="margin:0">&copy; <?= date('Y') ?> <?= e($appName) ?></p>
+        <nav style="display:flex;gap:10px;font-size:.85rem">
+            <?php foreach (($GLOBALS['available_langs'] ?? ['en']) as $lc): ?>
+                <a href="?setlang=<?= e($lc) ?>" style="<?= lang_code() === $lc ? 'font-weight:700' : '' ?>"><?= e(strtoupper($lc)) ?></a>
+            <?php endforeach; ?>
+        </nav>
     </div>
 </footer>
 

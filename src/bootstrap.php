@@ -69,3 +69,26 @@ session_start();
 require __DIR__ . '/helpers.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/mailer.php';
+
+// --- Language (i18n) --------------------------------------------------
+$availableLangs = ['en', 'ru', 'uz'];
+
+// Switch language via ?setlang=xx, then redirect to the same page.
+if (isset($_GET['setlang']) && in_array($_GET['setlang'], $availableLangs, true)) {
+    $_SESSION['lang'] = $_GET['setlang'];
+    setcookie('lang', $_GET['setlang'], time() + 31536000, '/');
+    header('Location: ' . strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?'));
+    exit;
+}
+
+// Note: $GLOBALS['lang'] aliases a global $lang, so avoid a variable named $lang.
+$chosenLang = $_SESSION['lang'] ?? ($_COOKIE['lang'] ?? (setting('default_lang') ?: 'en'));
+if (!in_array($chosenLang, $availableLangs, true)) {
+    $chosenLang = 'en';
+}
+$enStrings = require APP_ROOT . '/lang/en.php';
+$GLOBALS['lang_code'] = $chosenLang;
+$GLOBALS['available_langs'] = $availableLangs;
+$GLOBALS['lang'] = $chosenLang === 'en'
+    ? $enStrings
+    : array_merge($enStrings, require APP_ROOT . '/lang/' . $chosenLang . '.php');

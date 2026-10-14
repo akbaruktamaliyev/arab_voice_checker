@@ -1,0 +1,62 @@
+<?php
+/**
+ * QRaft — Russian strings.
+ */
+
+return [
+    'nav.generator'   => 'Генератор',
+    'nav.dashboard'   => 'Панель',
+    'nav.admin'       => 'Админка',
+    'nav.signin'      => 'Войти',
+    'nav.signout'     => 'Выйти',
+    'nav.getstarted'  => 'Начать',
+
+    'hero.title'      => 'Создавайте QR-коды за секунды',
+    'hero.subtitle'   => 'Генерируйте QR-коды для ссылок, Wi-Fi, визиток и не только — бесплатно, мгновенно, прямо в браузере. Заведите аккаунт для динамических кодов со статистикой сканов.',
+    'gen.contains'    => 'Что поместить в QR?',
+    'gen.size'        => 'Размер',
+    'gen.dotstyle'    => 'Форма точек',
+    'gen.eyestyle'    => 'Форма «глаз»',
+    'gen.qrcolour'    => 'Цвет QR',
+    'gen.background'  => 'Фон',
+    'gen.gradient'    => 'Градиентная заливка',
+    'gen.gradient2'   => 'Второй цвет градиента',
+    'gen.logo'        => 'Логотип по центру',
+    'gen.optional'    => '(необязательно)',
+    'gen.removelogo'  => 'Убрать логотип',
+    'gen.hint'        => 'Заполните поля, чтобы увидеть QR-код',
+    'gen.download_png' => 'Скачать PNG',
+    'gen.download_svg' => 'Скачать SVG',
+    'gen.privacy'     => 'Всё создаётся на вашем устройстве — ничего не загружается.',
+    'gen.track_title' => 'Нужна статистика сканов?',
+    'gen.track_text'  => 'Динамические QR-коды позволяют менять адрес позже и видеть, сколько раз код отсканировали.',
+    'gen.create_account' => 'Создать бесплатный аккаунт',
+    'gen.go_dashboard'   => 'Перейти в панель',
+
+    'auth.welcome_back'  => 'С возвращением',
+    'auth.email'         => 'Email',
+    'auth.password'      => 'Пароль',
+    'auth.signin'        => 'Войти',
+    'auth.forgot'        => 'Забыли пароль?',
+    'auth.no_account'    => 'Ещё нет аккаунта?',
+    'auth.create_one'    => 'Создать',
+    'auth.create_account'=> 'Создание аккаунта',
+    'auth.name'          => 'Имя',
+    'auth.have_account'  => 'Уже есть аккаунт?',
+    'auth.invalid'       => 'Неверный email или пароль.',
+    'auth.suspended'     => 'Ваш аккаунт заблокирован.',
+    'auth.verify_first'  => 'Подтвердите email перед входом.',
+
+    'forgot.title'    => 'Забыли пароль?',
+    'forgot.intro'    => 'Введите email — пришлём ссылку для сброса.',
+    'forgot.send'     => 'Отправить ссылку',
+    'forgot.sent'     => 'Если такой email зарегистрирован, ссылка для сброса уже в пути.',
+    'forgot.back'     => 'Назад ко входу',
+    'reset.title'     => 'Новый пароль',
+    'reset.new'       => 'Новый пароль',
+    'reset.update'    => 'Обновить пароль',
+    'reset.invalid'   => 'Ссылка для сброса недействительна или устарела.',
+    'reset.request'   => 'Запросить новую ссылку',
+
+    'footer.made'     => 'Сделано на',
+];

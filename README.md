@@ -28,6 +28,7 @@ host and it runs.
 - Password reset and optional email verification over SMTP (dependency-free mailer)
 - Configurable site name, registration toggle and SMTP, all from the admin UI
 - Light / dark theme with a one-click toggle
+- Multi-language (English, Russian, Uzbek) with a language switcher and RTL support
 
 **Dynamic QR codes** (SaaS, account required)
 - One short link per code: `yoursite.com/q/XXXXXX`, or a custom code like `/q/summer-menu`

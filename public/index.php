@@ -11,16 +11,15 @@ $title = 'Free QR Code Generator';
 ob_start();
 ?>
 <section class="hero">
-    <h1>Create QR codes in seconds</h1>
-    <p>Generate QR codes for links, Wi-Fi, vCards and more — free, instantly,
-       right in your browser. Create an account for dynamic codes with scan analytics.</p>
+    <h1><?= e(t('hero.title')) ?></h1>
+    <p><?= e(t('hero.subtitle')) ?></p>
 </section>
 
 <section class="section">
     <div class="grid-2">
         <div class="card stack">
             <div class="field">
-                <label for="qr-type">What should the QR contain?</label>
+                <label for="qr-type"><?= e(t('gen.contains')) ?></label>
                 <select id="qr-type">
                     <option value="url">Website link</option>
                     <option value="text">Plain text</option>
@@ -37,7 +36,7 @@ ob_start();
             </div>
             <div id="qr-fields"></div>
             <div class="field">
-                <label for="qr-size">Size</label>
+                <label for="qr-size"><?= e(t('gen.size')) ?></label>
                 <select id="qr-size">
                     <option value="192">Small (192px)</option>
                     <option value="256" selected>Medium (256px)</option>
@@ -47,7 +46,7 @@ ob_start();
             </div>
             <div class="row">
                 <div class="field">
-                    <label for="qr-dots">Dot style</label>
+                    <label for="qr-dots"><?= e(t('gen.dotstyle')) ?></label>
                     <select id="qr-dots">
                         <option value="square">Square</option>
                         <option value="rounded" selected>Rounded</option>
@@ -58,7 +57,7 @@ ob_start();
                     </select>
                 </div>
                 <div class="field">
-                    <label for="qr-eyes">Eye style</label>
+                    <label for="qr-eyes"><?= e(t('gen.eyestyle')) ?></label>
                     <select id="qr-eyes">
                         <option value="square">Square</option>
                         <option value="extra-rounded" selected>Rounded</option>
@@ -68,36 +67,36 @@ ob_start();
             </div>
             <div class="row">
                 <div class="field">
-                    <label for="qr-fg">QR colour</label>
+                    <label for="qr-fg"><?= e(t('gen.qrcolour')) ?></label>
                     <input type="color" id="qr-fg" value="#000000">
                 </div>
                 <div class="field">
-                    <label for="qr-bg">Background</label>
+                    <label for="qr-bg"><?= e(t('gen.background')) ?></label>
                     <input type="color" id="qr-bg" value="#ffffff">
                 </div>
             </div>
-            <label style="font-weight:400"><input type="checkbox" id="qr-gradient" style="width:auto"> Gradient fill</label>
+            <label style="font-weight:400"><input type="checkbox" id="qr-gradient" style="width:auto"> <?= e(t('gen.gradient')) ?></label>
             <div class="field" id="qr-fg2-wrap" style="display:none">
-                <label for="qr-fg2">Gradient second colour</label>
+                <label for="qr-fg2"><?= e(t('gen.gradient2')) ?></label>
                 <input type="color" id="qr-fg2" value="#7c3aed">
             </div>
             <div class="field">
-                <label for="qr-logo">Centre logo <span class="muted">(optional)</span></label>
+                <label for="qr-logo"><?= e(t('gen.logo')) ?> <span class="muted"><?= e(t('gen.optional')) ?></span></label>
                 <input type="file" id="qr-logo" accept="image/*">
                 <button type="button" id="qr-logo-clear" class="btn btn-ghost" hidden
-                        style="margin-top:8px">Remove logo</button>
+                        style="margin-top:8px"><?= e(t('gen.removelogo')) ?></button>
             </div>
         </div>
 
         <div class="card stack center">
             <div class="qr-preview" id="qr-holder"></div>
-            <span class="muted" id="qr-hint">Fill in the fields to see your QR code</span>
+            <span class="muted" id="qr-hint"><?= e(t('gen.hint')) ?></span>
             <div class="row">
-                <button type="button" id="qr-download-png" class="btn btn-primary" disabled>Download PNG</button>
-                <button type="button" id="qr-download-svg" class="btn btn-ghost" disabled>Download SVG</button>
+                <button type="button" id="qr-download-png" class="btn btn-primary" disabled><?= e(t('gen.download_png')) ?></button>
+                <button type="button" id="qr-download-svg" class="btn btn-ghost" disabled><?= e(t('gen.download_svg')) ?></button>
             </div>
             <p class="muted" style="font-size:.85rem">
-                Everything is generated on your device — nothing is uploaded.
+                <?= e(t('gen.privacy')) ?>
             </p>
         </div>
     </div>
@@ -105,13 +104,12 @@ ob_start();
 
 <section class="section center">
     <div class="card">
-        <h2>Want to track scans?</h2>
-        <p class="muted">Dynamic QR codes let you change the destination later and
-           see how many times each code was scanned.</p>
+        <h2><?= e(t('gen.track_title')) ?></h2>
+        <p class="muted"><?= e(t('gen.track_text')) ?></p>
         <?php if (current_user_id() === null): ?>
-            <a class="btn btn-primary" href="<?= e(url('register.php')) ?>">Create a free account</a>
+            <a class="btn btn-primary" href="<?= e(url('register.php')) ?>"><?= e(t('gen.create_account')) ?></a>
         <?php else: ?>
-            <a class="btn btn-primary" href="<?= e(url('dashboard.php')) ?>">Go to your dashboard</a>
+            <a class="btn btn-primary" href="<?= e(url('dashboard.php')) ?>"><?= e(t('gen.go_dashboard')) ?></a>
         <?php endif; ?>
     </div>
 </section>

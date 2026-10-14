@@ -41,24 +41,24 @@ ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">
     <div class="card stack">
-        <h1 style="margin:0">Forgot your password?</h1>
+        <h1 style="margin:0"><?= e(t('forgot.title')) ?></h1>
         <?php if ($sent): ?>
-            <div class="flash flash-success">If that email is registered, a reset link is on its way.</div>
+            <div class="flash flash-success"><?= e(t('forgot.sent')) ?></div>
             <?php if (!mail_enabled()): ?>
                 <p class="muted" style="font-size:.85rem">Note: email is not configured yet, so no message was actually sent. An admin can set SMTP in the admin panel.</p>
             <?php endif; ?>
-            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>">Back to sign in</a>
+            <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>"><?= e(t('forgot.back')) ?></a>
         <?php else: ?>
-            <p class="muted">Enter your email and we'll send a reset link.</p>
+            <p class="muted"><?= e(t('forgot.intro')) ?></p>
             <form method="post" class="stack">
                 <?= csrf_field() ?>
                 <div class="field">
-                    <label for="email">Email</label>
+                    <label for="email"><?= e(t('auth.email')) ?></label>
                     <input type="email" id="email" name="email" value="<?= e($email) ?>" required>
                 </div>
-                <button class="btn btn-primary btn-block">Send reset link</button>
+                <button class="btn btn-primary btn-block"><?= e(t('forgot.send')) ?></button>
             </form>
-            <p class="muted center"><a href="<?= e(url('login.php')) ?>">Back to sign in</a></p>
+            <p class="muted center"><a href="<?= e(url('login.php')) ?>"><?= e(t('forgot.back')) ?></a></p>
         <?php endif; ?>
     </div>
 </section>

@@ -11,6 +11,25 @@ function e(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/** Translate a key for the current language (sprintf args optional). */
+function t(string $key, mixed ...$args): string
+{
+    $s = $GLOBALS['lang'][$key] ?? $key;
+    return $args ? vsprintf($s, $args) : $s;
+}
+
+/** Current language code (e.g. "en"). */
+function lang_code(): string
+{
+    return $GLOBALS['lang_code'] ?? 'en';
+}
+
+/** Is the current language right-to-left? */
+function is_rtl(): bool
+{
+    return in_array(lang_code(), ['ar', 'fa', 'he', 'ur'], true);
+}
+
 /** Read the app config from config.php (loaded once in bootstrap). */
 function config(string $key, mixed $default = null): mixed
 {
