@@ -74,13 +74,19 @@ $pdo->exec("SET time_zone = '" . date('P') . "'");
 // (directly or via a proxy), so it is never sent over plain HTTP.
 $onHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
-session_set_cookie_params([
-    'httponly' => true,
-    'samesite' => 'Lax',
-    'secure'   => $onHttps,
-]);
-ini_set('session.use_strict_mode', '1'); // never adopt a session id the server did not issue
-session_start();
+if (defined('QRAFT_NO_SESSION')) {
+    // Public endpoints (QR redirects, bio pages, API) are anonymous and must not
+    // hand every scanner a cookie and a session file.
+    $_SESSION = [];
+} else {
+    session_set_cookie_params([
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure'   => $onHttps,
+    ]);
+    ini_set('session.use_strict_mode', '1'); // never adopt a session id the server did not issue
+    session_start();
+}
 
 // Baseline security headers: no MIME sniffing, no framing by other sites
 // (clickjacking on admin/billing pages), and a conservative referrer policy.

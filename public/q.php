@@ -8,6 +8,7 @@
  */
 
 declare(strict_types=1);
+define('QRAFT_NO_SESSION', true);   // anonymous endpoint: no cookie, no session file
 require __DIR__ . '/../src/bootstrap.php';
 
 $code = (string) ($_GET['c'] ?? '');
@@ -41,7 +42,17 @@ if ($qr['scan_limit'] !== null && (int) $qr['scan_count'] >= (int) $qr['scan_lim
 // Password gate: show a prompt and only continue on the correct password.
 if ($qr['password_hash'] !== null && $qr['password_hash'] !== '') {
     $given = (string) ($_POST['password'] ?? '');
+    $bucket = 'qrpw:' . $code;
+    // Too many wrong guesses from this visitor for this code: refuse without checking.
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && throttle_blocked($pdo, $bucket, QRPW_MAX_ATTEMPTS, QRPW_WINDOW_MINUTES)) {
+        header('Retry-After: ' . (QRPW_WINDOW_MINUTES * 60));
+        standalone_page(t('q.protected_page'),
+            '<h1>' . e(t('q.locked_title')) . '</h1><p class="m">' . e(t('q.locked_text', QRPW_WINDOW_MINUTES)) . '</p>', 429);
+    }
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !password_verify($given, $qr['password_hash'])) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            throttle_hit($pdo, $bucket);
+        }
         $wrong = $_SERVER['REQUEST_METHOD'] === 'POST'
             ? '<p class="m" style="color:#d64545">' . e(t('q.wrong_pw')) . '</p>' : '';
         standalone_page(t('q.protected_page'),
@@ -65,7 +76,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD'
 try {
     $pdo->beginTransaction();
 
-    $ip   = $_SERVER['REMOTE_ADDR'] ?? '';
+    $ip   = client_ip();
     $salt = (string) config('base_url');
     $ipHash = $ip !== '' ? hash('sha256', $salt . '|' . $ip) : null;
 

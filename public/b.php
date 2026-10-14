@@ -4,6 +4,7 @@
  */
 
 declare(strict_types=1);
+define('QRAFT_NO_SESSION', true);   // anonymous endpoint: no cookie, no session file
 require __DIR__ . '/../src/bootstrap.php';
 
 $slug = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($_GET['s'] ?? ''));

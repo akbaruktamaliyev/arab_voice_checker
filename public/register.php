@@ -32,6 +32,11 @@ $name = $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
+    if (throttle_blocked($pdo, 'register', REGISTER_MAX_PER_HOUR, 60)) {
+        http_response_code(429);
+        $errors[] = t('err.rate_limited');
+    }
+    throttle_hit($pdo, 'register');
 
     $name  = trim((string) ($_POST['name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));

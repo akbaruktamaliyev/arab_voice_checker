@@ -12,6 +12,7 @@
  */
 
 declare(strict_types=1);
+define('QRAFT_NO_SESSION', true);   // token-authenticated: no cookie, no session file
 require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/api.php';
 

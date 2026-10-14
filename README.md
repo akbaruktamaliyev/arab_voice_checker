@@ -108,6 +108,9 @@ The installer has its own small string table at the top of `public/install/index
 - Keep `config.php` out of the web root's listing (handled by `.htaccess`).
 - Always serve over HTTPS in production so sessions and logins stay private.
 - Set `base_url` to your real public address — it is what the QR codes encode.
+- Rate limiting protects sign-in, QR passwords, password resets, registration and the API.
+  Behind a proxy/CDN set `trusted_proxy_header` in `config.php` (see the installation guide).
+- Public endpoints (QR redirects, bio pages, API) set no cookies and open no sessions.
 
 ## Credits
 

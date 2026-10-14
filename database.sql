@@ -137,13 +137,14 @@ CREATE TABLE IF NOT EXISTS `bio_links` (
         REFERENCES `bio_pages` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Failed sign-in attempts, for brute-force throttling ---------------------
-CREATE TABLE IF NOT EXISTS `login_attempts` (
-    `id`           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `ip_hash`      CHAR(64)        NOT NULL,
-    `attempted_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- Rate limiting: sign-in, QR passwords, resets, registration, API ---------
+CREATE TABLE IF NOT EXISTS `rate_hits` (
+    `id`      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `bucket`  VARCHAR(64) NOT NULL,
+    `subject` CHAR(64)    NOT NULL,        -- salted hash of the IP (or e-mail)
+    `hit_at`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `idx_la_ip_time` (`ip_hash`, `attempted_at`)
+    KEY `idx_rate` (`bucket`, `subject`, `hit_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Stripe webhook events already handled (idempotency) -------------------

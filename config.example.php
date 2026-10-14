@@ -27,4 +27,10 @@ return [
 
     // Length of the short code used in dynamic QR links (/q/XXXXXX).
     'code_length' => 6,
+
+    // Behind a reverse proxy / CDN? Name the header that carries the visitor's
+    // real IP so rate limiting and scan hashing see it ('CF-Connecting-IP' for
+    // Cloudflare, 'X-Real-IP' for nginx, or 'X-Forwarded-For'). Leave empty when
+    // the app is reached directly — a client could otherwise fake its IP.
+    'trusted_proxy_header' => '',
 ];

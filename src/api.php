@@ -63,6 +63,13 @@ function api_error(string $code, int $status): never
     json_out(['error' => t('api.' . $code), 'error_code' => $code], $status);
 }
 
+/** 429 with a Retry-After header. */
+function api_rate_limited(int $retryAfter): never
+{
+    header('Retry-After: ' . $retryAfter);
+    api_error('rate_limited', 429);
+}
+
 /** Extract the bearer token from the request, across server setups. */
 function bearer_token(): ?string
 {
@@ -83,12 +90,23 @@ function api_user(PDO $pdo): int
     if ($token === null) {
         api_error('missing_token', 401);
     }
+    // Stop token guessing: too many bad tokens from one visitor → 429.
+    if (throttle_blocked($pdo, 'api-bad', API_MAX_BAD_TOKENS, 15)) {
+        api_rate_limited(15 * 60);
+    }
     $stmt = $pdo->prepare('SELECT id, user_id FROM api_tokens WHERE token_hash = ?');
     $stmt->execute([hash('sha256', $token)]);
     $row = $stmt->fetch();
     if (!$row) {
+        throttle_hit($pdo, 'api-bad');
         api_error('invalid_token', 401);
     }
+    // Per-token request budget.
+    $tokenKey = hash('sha256', 'api-token|' . $row['id']);
+    if (throttle_blocked($pdo, 'api', API_MAX_PER_MINUTE, 1, $tokenKey)) {
+        api_rate_limited(60);
+    }
+    throttle_hit($pdo, 'api', $tokenKey);
     $pdo->prepare('UPDATE api_tokens SET last_used = NOW() WHERE id = ?')->execute([$row['id']]);
 
     // Refuse suspended accounts.

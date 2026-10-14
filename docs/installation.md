@@ -144,6 +144,11 @@ server {
 - [ ] Confirm `config.php` is not web-accessible (the bundled `.htaccess`
       blocks `.sql`/`.md`; `config.php` sits outside `public` already).
 - [ ] Set up regular database backups.
+- [ ] **Behind Cloudflare or another proxy?** Set `'trusted_proxy_header'` in `config.php`
+      (`'CF-Connecting-IP'`, `'X-Real-IP'` or `'X-Forwarded-For'`). Without it every visitor
+      shares the proxy's IP, so rate limiting (sign-in, QR passwords, password resets,
+      registration, API) would treat everyone as one person. Only set it when the proxy
+      always writes that header.
 
 ---
 

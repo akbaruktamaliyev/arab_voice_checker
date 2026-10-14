@@ -56,6 +56,7 @@ Returns `{ "deleted": true }`.
 | 404 | Code not found (or not yours) |
 | 409 | Slug already taken |
 | 422 | Validation error |
+| 429 | Rate limited — 120 requests/minute per token (and 20 bad tokens per 15 min per IP); see the `Retry-After` header |
 
 Every error body is JSON with a human-readable message and a stable machine code:
 
@@ -65,7 +66,7 @@ Every error body is JSON with a human-readable message and a stable machine code
 
 Branch on `error_code` (`missing_token`, `invalid_token`, `suspended`, `not_found`,
 `plan_limit`, `title_required`, `url_required`, `invalid_slug`, `slug_taken`, `need_id`,
-`invalid_url`, `invalid_title`, `nothing`, `method`) — the `error` text is translated.
+`invalid_url`, `invalid_title`, `nothing`, `method`, `rate_limited`) — the `error` text is translated.
 
 ### Language
 

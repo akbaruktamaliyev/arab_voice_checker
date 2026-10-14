@@ -11,17 +11,25 @@ if (current_user_id() !== null) {
 }
 
 $sent = false;
+$limited = false;
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $email = trim((string) ($_POST['email'] ?? ''));
 
-    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (throttle_blocked($pdo, 'forgot', FORGOT_MAX_PER_IP, 60)) {
+        // Too many requests from this visitor: stop before touching the database or mail.
+        $limited = true;
+    } elseif (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throttle_hit($pdo, 'forgot');
         $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
-        if ($user) {
+        // Cap mails per target address too, so one inbox cannot be flooded from many IPs.
+        $mailKey = hash('sha256', strtolower($email));
+        if ($user && !throttle_blocked($pdo, 'forgot-mail', FORGOT_MAX_PER_EMAIL, 60, $mailKey)) {
+            throttle_hit($pdo, 'forgot-mail', $mailKey);
             $token = bin2hex(random_bytes(32));
             $pdo->prepare('UPDATE users SET reset_token = ?, reset_expires = (NOW() + INTERVAL 1 HOUR) WHERE id = ?')
                 ->execute([hash('sha256', $token), $user['id']]);
@@ -33,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     // Always the same response — never reveal whether an email is registered.
-    $sent = true;
+    $sent = empty($limited);
 }
 
 $title = t('forgot.page_title');
@@ -45,10 +53,11 @@ ob_start();
         <?php if ($sent): ?>
             <div class="flash flash-success"><?= e(t('forgot.sent')) ?></div>
             <?php if (!mail_enabled()): ?>
-                <p class="muted" style="font-size:.85rem">Note: email is not configured yet, so no message was actually sent. An admin can set SMTP in the admin panel.</p>
+                <p class="muted" style="font-size:.85rem"><?= e(t('forgot.no_mail')) ?></p>
             <?php endif; ?>
             <a class="btn btn-ghost" href="<?= e(url('login.php')) ?>"><?= e(t('forgot.back')) ?></a>
         <?php else: ?>
+            <?php if ($limited): ?><div class="flash flash-error"><?= e(t('err.rate_limited')) ?></div><?php endif; ?>
             <p class="muted"><?= e(t('forgot.intro')) ?></p>
             <form method="post" class="stack">
                 <?= csrf_field() ?>
