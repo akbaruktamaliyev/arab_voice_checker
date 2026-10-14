@@ -17,6 +17,11 @@ host and it runs.
 - One-click **PNG and SVG** download
 - Generated entirely in the visitor's browser — nothing is uploaded
 
+**REST API**
+- Personal bearer tokens (create and revoke from the account)
+- List, create, update and delete dynamic codes over JSON — e.g.
+  `curl /api/codes.php -H "Authorization: Bearer <token>"`
+
 **Admin & setup**
 - Web installer: database setup, schema import and admin creation from the browser
 - Admin panel: user management (suspend, promote, delete) and site settings
