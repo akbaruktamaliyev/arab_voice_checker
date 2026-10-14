@@ -36,6 +36,11 @@ https://your-site/api/stripe-webhook.php
 
 Subscribe to **`checkout.session.completed`**, copy the signing secret
 (`whsec_…`) into the settings. On a completed payment the user's plan is
+
+The endpoint answers `ok` (200) on success and a short plain-text reason (400) on
+failure — bad signature, bad payload or no secret configured. Stripe sends no language
+header, so the reason is shown in the site's default language (Settings → Default language)
+and appears in the Stripe dashboard's delivery log.
 activated for its period (month / year / lifetime).
 
 ## How checkout works

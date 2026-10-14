@@ -13,12 +13,13 @@ $payload = file_get_contents('php://input') ?: '';
 $sig = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
 $secret = trim((string) setting('stripe_webhook_secret', ''));
 
+header('Content-Type: text/plain; charset=UTF-8');
 http_response_code(400);
 
 // Fail closed: without a configured signing secret we cannot trust any event,
 // so never process unsigned webhooks (prevents forged plan activation).
 if ($secret === '') {
-    exit('Webhook secret not configured');
+    exit(t('hook.no_secret'));
 }
 
 // Verify the signature (t=timestamp,v1=hmac).
@@ -29,12 +30,12 @@ foreach (explode(',', $sig) as $kv) {
 }
 $expected = hash_hmac('sha256', ($parts['t'] ?? '') . '.' . $payload, $secret);
 if (empty($parts['v1']) || !hash_equals($expected, $parts['v1'])) {
-    exit('Invalid signature');
+    exit(t('hook.bad_sig'));
 }
 
 $event = json_decode($payload, true);
 if (!is_array($event)) {
-    exit('Bad payload');
+    exit(t('hook.bad_payload'));
 }
 
 if (($event['type'] ?? '') === 'checkout.session.completed') {
