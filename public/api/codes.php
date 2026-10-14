@@ -41,6 +41,14 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    // Enforce the plan's dynamic-code limit (same as the web create flow).
+    $plan = user_plan($pdo, $uid);
+    $planCodes = $plan['max_codes'] === null ? null : (int) $plan['max_codes'];
+    $have = (int) $pdo->query('SELECT COUNT(*) FROM qr_codes WHERE user_id = ' . $uid)->fetchColumn();
+    if (!within_limit($planCodes, $have)) {
+        json_out(['error' => 'Plan limit reached. Upgrade to create more codes.'], 403);
+    }
+
     $in = api_input();
     $title  = trim((string) ($in['title'] ?? ''));
     $target = clean_url((string) ($in['target_url'] ?? ''));

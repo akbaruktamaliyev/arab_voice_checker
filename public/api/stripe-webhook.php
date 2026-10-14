@@ -15,17 +15,21 @@ $secret = trim((string) setting('stripe_webhook_secret', ''));
 
 http_response_code(400);
 
-// Verify the signature (t=timestamp,v1=hmac) when a secret is configured.
-if ($secret !== '') {
-    $parts = [];
-    foreach (explode(',', $sig) as $kv) {
-        [$k, $v] = array_pad(explode('=', $kv, 2), 2, '');
-        $parts[$k] = $v;
-    }
-    $expected = hash_hmac('sha256', ($parts['t'] ?? '') . '.' . $payload, $secret);
-    if (empty($parts['v1']) || !hash_equals($expected, $parts['v1'])) {
-        exit('Invalid signature');
-    }
+// Fail closed: without a configured signing secret we cannot trust any event,
+// so never process unsigned webhooks (prevents forged plan activation).
+if ($secret === '') {
+    exit('Webhook secret not configured');
+}
+
+// Verify the signature (t=timestamp,v1=hmac).
+$parts = [];
+foreach (explode(',', $sig) as $kv) {
+    [$k, $v] = array_pad(explode('=', $kv, 2), 2, '');
+    $parts[$k] = $v;
+}
+$expected = hash_hmac('sha256', ($parts['t'] ?? '') . '.' . $payload, $secret);
+if (empty($parts['v1']) || !hash_equals($expected, $parts['v1'])) {
+    exit('Invalid signature');
 }
 
 $event = json_decode($payload, true);
