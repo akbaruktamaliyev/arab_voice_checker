@@ -17,6 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create') {
         $title = trim((string) ($_POST['title'] ?? ''));
         $slug  = trim((string) ($_POST['slug'] ?? ''));
+        // Enforce the plan's bio-page limit.
+        $plan = user_plan($pdo, $uid);
+        $planBios = $plan['max_bios'] === null ? null : (int) $plan['max_bios'];
+        $bioCount = (int) $pdo->query('SELECT COUNT(*) FROM bio_pages WHERE user_id = ' . (int) $uid)->fetchColumn();
+        if (!within_limit($planBios, $bioCount)) {
+            $errors[] = 'Your ' . $plan['name'] . ' plan allows up to ' . (int) $planBios . ' bio page(s). Upgrade for more.';
+        }
         if ($title === '' || mb_strlen($title) > 120) {
             $errors[] = 'Enter a page title.';
         }

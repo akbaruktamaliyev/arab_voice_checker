@@ -7,6 +7,25 @@ declare(strict_types=1);
 require __DIR__ . '/../src/bootstrap.php';
 require_login();
 
+// Enforce the plan's dynamic-code limit.
+$plan = user_plan($pdo, (int) current_user_id());
+$planCodes = $plan['max_codes'] === null ? null : (int) $plan['max_codes'];
+$codeCount = (int) $pdo->query('SELECT COUNT(*) FROM qr_codes WHERE user_id = ' . (int) current_user_id())->fetchColumn();
+if (!within_limit($planCodes, $codeCount)) {
+    $title = 'Limit reached';
+    ob_start(); ?>
+    <section class="section" style="max-width:480px;margin-inline:auto">
+        <div class="card center stack">
+            <h1 style="margin:0">Plan limit reached</h1>
+            <p class="muted">Your <strong><?= e($plan['name']) ?></strong> plan allows up to
+               <?= (int) $planCodes ?> dynamic codes. Upgrade for more.</p>
+            <a class="btn btn-primary" href="<?= e(url('pricing.php')) ?>">See plans</a>
+            <a href="<?= e(url('dashboard.php')) ?>">← Back</a>
+        </div>
+    </section>
+    <?php $content = ob_get_clean(); require __DIR__ . '/../src/layout.php'; exit;
+}
+
 $errors = [];
 $title_in = $target_in = '';
 

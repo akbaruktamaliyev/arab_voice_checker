@@ -17,6 +17,11 @@ host and it runs.
 - One-click **PNG and SVG** download
 - Generated entirely in the visitor's browser — nothing is uploaded
 
+**Monetization**
+- Subscription plans with per-plan limits (dynamic codes, bio pages), enforced
+- Optional Stripe checkout + webhook to sell upgrades (one-time period access)
+- Pricing page, per-user billing page, and admin plan management
+
 **REST API**
 - Personal bearer tokens (create and revoke from the account)
 - List, create, update and delete dynamic codes over JSON — e.g.

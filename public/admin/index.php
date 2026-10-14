@@ -23,6 +23,7 @@ ob_start();
     <h1 style="margin:0">Admin</h1>
     <div style="display:flex;gap:10px">
         <a class="btn btn-ghost" href="<?= e(url('admin/users.php')) ?>">Users</a>
+        <a class="btn btn-ghost" href="<?= e(url('admin/plans.php')) ?>">Plans</a>
         <a class="btn btn-ghost" href="<?= e(url('admin/settings.php')) ?>">Settings</a>
     </div>
 </div>

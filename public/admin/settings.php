@@ -30,6 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $secure = in_array($_POST['smtp_secure'] ?? 'tls', ['tls', 'ssl', 'none'], true) ? $_POST['smtp_secure'] : 'tls';
     set_setting($pdo, 'smtp_secure', $secure);
 
+    // Payments (Stripe) + currency + default language.
+    set_setting($pdo, 'stripe_secret', trim((string) ($_POST['stripe_secret'] ?? '')));
+    set_setting($pdo, 'stripe_public', trim((string) ($_POST['stripe_public'] ?? '')));
+    set_setting($pdo, 'stripe_webhook_secret', trim((string) ($_POST['stripe_webhook_secret'] ?? '')));
+    set_setting($pdo, 'currency', preg_replace('/[^a-z]/', '', strtolower((string) ($_POST['currency'] ?? 'usd'))) ?: 'usd');
+    $dl = in_array($_POST['default_lang'] ?? 'en', $GLOBALS['available_langs'] ?? ['en'], true) ? $_POST['default_lang'] : 'en';
+    set_setting($pdo, 'default_lang', $dl);
+
     flash('Settings saved.', 'success');
     redirect('admin/settings.php');
 }
@@ -82,6 +90,29 @@ ob_start();
                     <?php endforeach; ?>
                 </select></div>
         </div>
+    </div>
+
+    <div class="card stack">
+        <h2 style="margin:0;font-size:1.1rem">Payments (Stripe)</h2>
+        <p class="muted" style="margin:0">Leave blank to disable paid plans. Webhook URL:
+           <code><?= e(url('api/stripe-webhook.php')) ?></code> (event <code>checkout.session.completed</code>).</p>
+        <div class="field"><label for="stripe_public">Publishable key</label>
+            <input type="text" id="stripe_public" name="stripe_public" value="<?= e(setting('stripe_public', '')) ?>" placeholder="pk_live_... / pk_test_..."></div>
+        <div class="field"><label for="stripe_secret">Secret key</label>
+            <input type="text" id="stripe_secret" name="stripe_secret" value="<?= e(setting('stripe_secret', '')) ?>" placeholder="sk_live_... / sk_test_..."></div>
+        <div class="field"><label for="stripe_webhook_secret">Webhook signing secret</label>
+            <input type="text" id="stripe_webhook_secret" name="stripe_webhook_secret" value="<?= e(setting('stripe_webhook_secret', '')) ?>" placeholder="whsec_..."></div>
+        <div class="row">
+            <div class="field" style="max-width:140px"><label for="currency">Currency</label>
+                <input type="text" id="currency" name="currency" value="<?= e(setting('currency', 'usd')) ?>" maxlength="3"></div>
+            <div class="field" style="max-width:160px"><label for="default_lang">Default language</label>
+                <select id="default_lang" name="default_lang">
+                    <?php foreach (($GLOBALS['available_langs'] ?? ['en']) as $lc): ?>
+                        <option value="<?= e($lc) ?>" <?= setting('default_lang', 'en') === $lc ? 'selected' : '' ?>><?= e(strtoupper($lc)) ?></option>
+                    <?php endforeach; ?>
+                </select></div>
+        </div>
+        <p class="muted" style="margin:0"><a href="<?= e(url('admin/plans.php')) ?>">Manage plans →</a></p>
     </div>
 
     <button type="submit" class="btn btn-primary">Save settings</button>

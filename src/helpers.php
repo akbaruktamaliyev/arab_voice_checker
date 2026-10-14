@@ -62,6 +62,39 @@ function app_name(): string
 }
 
 /**
+ * The user's effective plan (limits). Returns their paid plan while it is
+ * active, otherwise the free plan (cheapest active plan), otherwise a default.
+ */
+function user_plan(PDO $pdo, int $uid): array
+{
+    $stmt = $pdo->prepare(
+        'SELECT p.* FROM users u JOIN plans p ON p.id = u.plan_id
+         WHERE u.id = ? AND (u.plan_expires IS NULL OR u.plan_expires > NOW())'
+    );
+    $stmt->execute([$uid]);
+    if ($plan = $stmt->fetch()) {
+        return $plan;
+    }
+    $free = $pdo->query('SELECT * FROM plans WHERE is_active = 1 ORDER BY price, sort LIMIT 1')->fetch();
+    return $free ?: ['name' => 'Free', 'max_codes' => 5, 'max_bios' => 1];
+}
+
+/** Is a count still under a (nullable = unlimited) limit? */
+function within_limit(?int $max, int $count): bool
+{
+    return $max === null || $count < $max;
+}
+
+/** Price formatted from minor units, e.g. 900 -> "$9.00". */
+function format_price(int $minor, ?string $currency = null): string
+{
+    $cur = strtoupper($currency ?: (string) setting('currency', 'usd'));
+    $symbols = ['USD' => '$', 'EUR' => '€', 'GBP' => '£', 'UZS' => 'soʻm ', 'RUB' => '₽'];
+    $sym = $symbols[$cur] ?? ($cur . ' ');
+    return $sym . number_format($minor / 100, 2);
+}
+
+/**
  * Best-effort device / OS / browser from a User-Agent string, for analytics.
  * Returns [device, os, browser] with short labels (no external library).
  */

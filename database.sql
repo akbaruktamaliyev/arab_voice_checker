@@ -7,6 +7,21 @@ CREATE DATABASE IF NOT EXISTS `qraft`
 
 USE `qraft`;
 
+-- Subscription plans ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `plans` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name`       VARCHAR(80)  NOT NULL,
+    `price`      INT UNSIGNED NOT NULL DEFAULT 0,  -- minor units (e.g. cents)
+    `period`     ENUM('month','year','lifetime') NOT NULL DEFAULT 'month',
+    `max_codes`  INT UNSIGNED NULL,                -- NULL = unlimited
+    `max_bios`   INT UNSIGNED NULL,
+    `features`   VARCHAR(1000) NULL,               -- comma-separated, for display
+    `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
+    `sort`       INT          NOT NULL DEFAULT 0,
+    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Accounts -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `users` (
     `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -14,6 +29,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `email`         VARCHAR(190) NOT NULL,
     `password_hash` VARCHAR(255) NOT NULL,
     `role`          ENUM('user','admin') NOT NULL DEFAULT 'user',
+    `plan_id`       INT UNSIGNED NULL,
+    `plan_expires`  DATETIME     NULL,
     `is_verified`   TINYINT(1)   NOT NULL DEFAULT 0,
     `verify_token`  CHAR(64)     NULL,
     `reset_token`   CHAR(64)     NULL,
@@ -21,7 +38,10 @@ CREATE TABLE IF NOT EXISTS `users` (
     `is_blocked`    TINYINT(1)   NOT NULL DEFAULT 0,
     `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_users_email` (`email`)
+    UNIQUE KEY `uq_users_email` (`email`),
+    KEY `idx_user_plan` (`plan_id`),
+    CONSTRAINT `fk_user_plan` FOREIGN KEY (`plan_id`)
+        REFERENCES `plans` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Admin-configurable settings (key/value) -----------------------------
@@ -142,5 +162,17 @@ INSERT INTO `settings` (`name`, `value`) VALUES
     ('smtp_user', ''),
     ('smtp_pass', ''),
     ('smtp_from', ''),
-    ('smtp_secure', 'tls')
+    ('smtp_secure', 'tls'),
+    ('stripe_secret', ''),
+    ('stripe_public', ''),
+    ('stripe_webhook_secret', ''),
+    ('currency', 'usd'),
+    ('default_lang', 'en')
+ON DUPLICATE KEY UPDATE `name` = `name`;
+
+-- Default plans --------------------------------------------------------
+INSERT INTO `plans` (`name`, `price`, `period`, `max_codes`, `max_bios`, `features`, `sort`) VALUES
+    ('Free', 0, 'month', 5, 1, 'Up to 5 dynamic codes,1 bio page,Scan analytics,PNG/SVG export', 0),
+    ('Pro', 900, 'month', NULL, 10, 'Unlimited dynamic codes,10 bio pages,Password & expiry,PDF export,REST API', 1),
+    ('Business', 2900, 'month', NULL, NULL, 'Everything in Pro,Unlimited bio pages,Bulk import,Priority support', 2)
 ON DUPLICATE KEY UPDATE `name` = `name`;

@@ -40,6 +40,7 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
         </a>
         <nav class="nav">
             <a href="<?= e(url('index.php')) ?>"><?= e(t('nav.generator')) ?></a>
+            <a href="<?= e(url('pricing.php')) ?>">Pricing</a>
             <?php if ($uid !== null): ?>
                 <a href="<?= e(url('dashboard.php')) ?>"><?= e(t('nav.dashboard')) ?></a>
                 <?php if ($isAdmin): ?>
