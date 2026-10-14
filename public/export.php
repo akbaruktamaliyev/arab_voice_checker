@@ -37,7 +37,7 @@ if ($id > 0) {
         redirect('dashboard.php');
     }
     $filename = 'scans-' . $qr['code'] . '-' . date('Ymd') . '.csv';
-    $header   = ['Scanned at', 'Visitor (hashed)', 'User agent', 'Referer'];
+    $header   = [t('csv.scanned_at'), t('csv.visitor'), t('csv.user_agent'), t('csv.referer')];
     $query = $pdo->prepare(
         'SELECT scanned_at, ip_hash, user_agent, referer
          FROM qr_scans WHERE qr_id = ? ORDER BY scanned_at DESC'
@@ -47,7 +47,7 @@ if ($id > 0) {
 } else {
     // All codes for this user.
     $filename = 'scans-all-' . date('Ymd') . '.csv';
-    $header   = ['Code title', 'Code', 'Scanned at', 'Visitor (hashed)', 'User agent', 'Referer'];
+    $header   = [t('csv.code_title'), t('csv.code'), t('csv.scanned_at'), t('csv.visitor'), t('csv.user_agent'), t('csv.referer')];
     $query = $pdo->prepare(
         'SELECT q.title, q.code, s.scanned_at, s.ip_hash, s.user_agent, s.referer
          FROM qr_scans s JOIN qr_codes q ON q.id = s.qr_id
