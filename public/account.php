@@ -113,6 +113,15 @@ ob_start();
     </div>
 </div>
 
+<div class="card stack" style="margin-bottom:22px">
+    <h2 style="margin:0;font-size:1.1rem"><?= e(t('acc.export')) ?></h2>
+    <p class="muted" style="margin:0"><?= e(t('acc.export_text')) ?></p>
+    <form method="post" action="<?= e(url('export-data.php')) ?>">
+        <?= csrf_field() ?>
+        <button class="btn btn-ghost"><?= e(t('acc.export')) ?></button>
+    </form>
+</div>
+
 <div class="card stack" style="border-color:var(--danger)">
     <h2 style="margin:0;font-size:1.1rem;color:var(--danger)"><?= e(t('acc.delete')) ?></h2>
     <p class="muted" style="margin:0"><?= e(t('acc.delete_text')) ?></p>

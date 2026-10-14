@@ -162,6 +162,37 @@ function parse_user_agent(string $ua): array
     return [$device, $os, $browser];
 }
 
+/** Date shown on the Terms and Privacy pages — bump it when you change their text. */
+const LEGAL_UPDATED = '2026-10-14';
+
+/** Contact address for the legal pages: the admin's setting, else the SMTP sender, else a generic phrase. */
+function legal_contact(): string
+{
+    $mail = trim((string) setting('contact_email', ''));
+    if ($mail === '') {
+        $mail = trim((string) setting('smtp_from', ''));
+    }
+    return $mail !== '' ? $mail : t('legal.no_contact');
+}
+
+/**
+ * Delete individual scan records older than the configured retention (setting
+ * scan_retention_days, 0 = keep forever). Totals on qr_codes.scan_count stay.
+ * Called opportunistically from the scan endpoint, so no cron job is needed.
+ */
+function purge_old_scans(PDO $pdo): void
+{
+    $days = (int) setting('scan_retention_days', '0');
+    if ($days <= 0) {
+        return;
+    }
+    try {
+        $pdo->exec('DELETE FROM qr_scans WHERE scanned_at < (NOW() - INTERVAL ' . $days . ' DAY) LIMIT 5000');
+    } catch (PDOException $e) {
+        // Best-effort housekeeping.
+    }
+}
+
 /** Build an absolute URL from the configured base_url. */
 function url(string $path = ''): string
 {

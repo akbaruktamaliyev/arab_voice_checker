@@ -37,6 +37,7 @@ if ($user && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = t('reset.title');
+$noindex = true;
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

@@ -11,7 +11,7 @@
  *
  * WARNING: run it against a development database. It creates users, codes and
  * pages prefixed "qrtest" and removes them again, and it briefly changes a few
- * settings (webhook secret, default language) which it restores.
+ * settings (webhook secret, retention, contact e-mail …); every setting is put back.
  *
  * Requires the curl extension. Exit code 0 = all passed.
  */
@@ -112,10 +112,9 @@ function login(Http $h, string $email, string $pw): array
 // ------------------------------------------------------------------- fixtures
 $P = 'qrtest';
 $pwA = 'Secret-A-123'; $pwAdm = 'Secret-Adm-123';
+// Snapshot every setting so the suite can put them all back, whatever it changes.
 $saved = [];
-foreach (['stripe_webhook_secret', 'default_lang'] as $k) {
-    $saved[$k] = val('SELECT value FROM settings WHERE name = ?', [$k]);
-}
+foreach ($pdo->query('SELECT name, value FROM settings') as $row) { $saved[$row['name']] = $row['value']; }
 function cleanup(): void
 {
     global $pdo, $P, $saved;
@@ -124,9 +123,11 @@ function cleanup(): void
     $pdo->exec("DELETE FROM bio_pages WHERE slug LIKE '{$P}-%'");
     $pdo->exec("DELETE FROM folders WHERE name LIKE '{$P}%'");
     $pdo->exec("DELETE FROM rate_hits");
+    foreach ($pdo->query('SELECT name FROM settings')->fetchAll(PDO::FETCH_COLUMN) as $name) {
+        if (!array_key_exists($name, $saved) && $name !== 'schema_version') { $pdo->prepare('DELETE FROM settings WHERE name = ?')->execute([$name]); }
+    }
     foreach ($saved as $k => $v) {
-        if ($v === false) { $pdo->prepare('DELETE FROM settings WHERE name = ?')->execute([$k]); }
-        else { $pdo->prepare('INSERT INTO settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)')->execute([$k, $v]); }
+        $pdo->prepare('INSERT INTO settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)')->execute([$k, $v]);
     }
 }
 cleanup();
@@ -181,7 +182,7 @@ check('every t() key used in code is defined', !$missing, implode(',', array_sli
 // ================================================================== 2. public
 section('2. Public pages and guards');
 $h = new Http();
-foreach (['index.php', 'pricing.php', 'login.php', 'register.php', 'forgot.php'] as $pg) {
+foreach (['index.php', 'pricing.php', 'login.php', 'register.php', 'forgot.php', 'terms.php', 'privacy.php'] as $pg) {
     eq("$pg → 200", $h->get("$base/$pg")['code'], 200);
 }
 foreach (['dashboard.php', 'create.php', 'bulk.php', 'bios.php', 'tokens.php', 'billing.php', 'account.php', 'admin/index.php', 'admin/codes.php'] as $pg) {
@@ -414,8 +415,50 @@ $raw($payload, $good);
 eq('replaying the same event changes nothing (idempotent)', (string) val('SELECT plan_expires FROM users WHERE id = ?', [$idB]), $exp1);
 db('DELETE FROM stripe_events WHERE id = ?', ["evt_qrtest_$t"]);
 
-// ============================================================ 12. migrations
-section('12. Schema');
+// ======================================================== 12. legal, SEO, data
+section('12. Legal pages, SEO and data export');
+$land = (new Http())->get("$base/index.php")['body'];
+has('meta description present', $land, '<meta name="description"');
+has('canonical link on public pages', $land, 'rel="canonical"');
+has('Open Graph tags present', $land, 'og:image');
+check('public pages are indexable', !str_contains($land, 'noindex'));
+has('sign-in page is noindex', (new Http())->get("$base/login.php")['body'], 'noindex');
+has('signed-in pages are noindex', $a->get("$base/account.php")['body'], 'noindex');
+has('footer links to the Terms', $land, 'terms.php');
+has('register page shows the consent line', (new Http())->get("$base/register.php")['body'], 'privacy.php');
+$robots = (new Http())->get("$base/robots.txt");
+check('robots.txt blocks the app and points to the sitemap', $robots['code'] === 200 && str_contains($robots['body'], 'Disallow: ') && str_contains($robots['body'], 'sitemap.xml'));
+$map = (new Http())->get("$base/sitemap.xml");
+check('sitemap.xml lists public pages', $map['code'] === 200 && str_contains($map['body'], 'pricing.php') && !str_contains($map['body'], 'dashboard'));
+foreach (['favicon.svg', 'assets/img/og.png'] as $asset) { eq("$asset is served", (new Http())->get("$base/$asset")['code'], 200); }
+foreach (['ru', 'uz'] as $l) {
+    $x = new Http(); $x->get("$base/index.php?setlang=$l");
+    foreach (['terms.php', 'privacy.php'] as $pg) {
+        $body = $x->get("$base/$pg")['body'];
+        check("[$l] $pg has no raw keys", $rawKey($body) === null, (string) $rawKey($body));
+        check("[$l] $pg is not English", !str_contains($body, 'Who we are') && !str_contains($body, 'Using the service'));
+    }
+}
+db("INSERT INTO settings (name, value) VALUES ('scan_retention_days', '0') ON DUPLICATE KEY UPDATE value = '0'");
+$idScan = (int) val("SELECT id FROM qr_codes WHERE code = ?", [$code]);
+db("INSERT INTO qr_scans (qr_id, scanned_at, user_agent) VALUES (?, NOW() - INTERVAL 400 DAY, 'qrtest-old')", [$idScan]);
+$adm->form("$base/admin/settings.php", ['app_name' => (string) val("SELECT value FROM settings WHERE name = 'app_name'") ?: 'QRaft', 'allow_registration' => '1', 'smtp_port' => '587', 'smtp_secure' => 'tls', 'currency' => 'usd', 'default_lang' => 'en', 'contact_email' => 'legal@example.test', 'scan_retention_days' => '30']);
+eq('admin can set the scan retention', (int) val("SELECT value FROM settings WHERE name = 'scan_retention_days'"), 30);
+has('privacy page reflects the retention period', (new Http())->get("$base/privacy.php")['body'], '30');
+has('privacy page shows the contact address', (new Http())->get("$base/privacy.php")['body'], 'legal@example.test');
+check('old scan records exist before purging', (int) val("SELECT COUNT(*) FROM qr_scans WHERE user_agent = 'qrtest-old'") === 1);
+// the purge runs on a random 1-in-200 scan; drive it directly through the app's own code path
+$phpCli = escapeshellarg(PHP_BINARY);
+$snippet = escapeshellarg("define('QRAFT_NO_SESSION', true); chdir(" . var_export($ROOT . '/public', true) . "); require " . var_export($ROOT . '/src/bootstrap.php', true) . "; purge_old_scans(\$pdo);");
+exec("$phpCli -r $snippet 2>&1");
+eq('purge removes old scans', (int) val("SELECT COUNT(*) FROM qr_scans WHERE user_agent = 'qrtest-old'"), 0);
+db("DELETE FROM settings WHERE name IN ('scan_retention_days', 'contact_email')");
+$r = $a->post("$base/export-data.php", []);
+eq('data export refuses a missing CSRF token', $r['code'], 419);
+$r = $a->form("$base/account.php", [], "$base/export-data.php");
+check('data export returns JSON without any hashes', str_contains($r['headers'], 'application/json') && !str_contains($r['body'], 'password_hash') && !str_contains($r['body'], 'token_hash') && isset(json_decode($r['body'], true)['codes']));
+// ============================================================ 13. migrations
+section('13. Schema');
 check('schema_version is recorded', (int) val("SELECT value FROM settings WHERE name = 'schema_version'") >= 1);
 check('qr_codes.admin_disabled exists', (int) val("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'qr_codes' AND COLUMN_NAME = 'admin_disabled'") === 1);
 

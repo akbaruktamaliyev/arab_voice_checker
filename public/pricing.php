@@ -11,6 +11,7 @@ $uid = current_user_id();
 $current = $uid !== null ? user_plan($pdo, (int) $uid) : null;
 
 $title = t('price.title');
+$description = t('price.sub');
 ob_start();
 ?>
 <section class="hero">

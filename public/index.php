@@ -8,6 +8,7 @@ declare(strict_types=1);
 require __DIR__ . '/../src/bootstrap.php';
 
 $title = t('hero.page_title');
+$description = t('hero.subtitle');
 ob_start();
 ?>
 <section class="hero">

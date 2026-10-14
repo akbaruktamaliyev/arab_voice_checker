@@ -99,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = t('auth.create_account');
+$noindex = true;
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">
@@ -121,6 +122,9 @@ ob_start();
                 <label for="password"><?= e(t('auth.password')) ?></label>
                 <input type="password" id="password" name="password" minlength="8" required>
             </div>
+            <p class="muted" style="font-size:.85rem;margin:0"><?= t('legal.consent',
+                '<a href="' . e(url('terms.php')) . '" target="_blank" rel="noopener">' . e(t('legal.consent_terms')) . '</a>',
+                '<a href="' . e(url('privacy.php')) . '" target="_blank" rel="noopener">' . e(t('legal.consent_privacy')) . '</a>') ?></p>
             <button type="submit" class="btn btn-primary btn-block"><?= e(t('auth.create_account')) ?></button>
         </form>
         <p class="muted center"><?= e(t('auth.have_account')) ?>

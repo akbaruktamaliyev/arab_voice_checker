@@ -22,6 +22,7 @@ if ($token !== '') {
 }
 
 $title = t('verify.title');
+$noindex = true;
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

@@ -31,6 +31,16 @@ if (preg_match('#^/b/([A-Za-z0-9_-]+)/?$#', $uri, $m)) {
     return true;
 }
 
+// /robots.txt and /sitemap.xml are generated (same as the .htaccess rewrites).
+if ($uri === '/robots.txt') {
+    require __DIR__ . '/public/robots.php';
+    return true;
+}
+if ($uri === '/sitemap.xml') {
+    require __DIR__ . '/public/sitemap.php';
+    return true;
+}
+
 // Let the built-in server serve any real file in the document root as-is.
 $file = __DIR__ . '/public' . $uri;
 if ($uri !== '/' && is_file($file)) {

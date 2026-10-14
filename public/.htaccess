@@ -10,6 +10,10 @@
 
     # /b/my-page  ->  b.php?s=my-page  (public bio pages)
     RewriteRule ^b/([A-Za-z0-9_-]+)/?$ b.php?s=$1 [L,QSA]
+
+    # /robots.txt and /sitemap.xml are generated so they use your base_url
+    RewriteRule ^robots\.txt$ robots.php [L]
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
 </IfModule>
 
 # Don't serve the raw config or SQL even if the web root is misconfigured.

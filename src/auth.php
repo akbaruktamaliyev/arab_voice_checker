@@ -28,6 +28,7 @@ function current_user(PDO $pdo): ?array
 function require_login(): void
 {
     global $pdo;
+    $GLOBALS['noindex'] = true;   // private pages stay out of search engines
     if (current_user_id() === null) {
         flash(t('err.sign_in'), 'info');
         redirect('login.php');

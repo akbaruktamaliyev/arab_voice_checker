@@ -101,6 +101,9 @@ try {
         ->execute([$qr['id']]);
 
     $pdo->commit();
+    if (random_int(1, 200) === 1) {
+        purge_old_scans($pdo);
+    }
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

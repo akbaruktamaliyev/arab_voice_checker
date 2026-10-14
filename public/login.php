@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = t('auth.signin');
+$noindex = true;
 ob_start();
 ?>
 <section class="section" style="max-width:440px;margin-inline:auto">

@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_setting($pdo, 'app_name', trim((string) ($_POST['app_name'] ?? 'QRaft')) ?: 'QRaft');
     $tzIn = (string) ($_POST['timezone'] ?? 'UTC');
     set_setting($pdo, 'timezone', in_array($tzIn, DateTimeZone::listIdentifiers(), true) ? $tzIn : 'UTC');
+    set_setting($pdo, 'contact_email', filter_var(trim((string) ($_POST['contact_email'] ?? '')), FILTER_VALIDATE_EMAIL) ?: '');
+    set_setting($pdo, 'scan_retention_days', (string) max(0, min(3650, (int) ($_POST['scan_retention_days'] ?? 0))));
     set_setting($pdo, 'allow_registration', isset($_POST['allow_registration']) ? '1' : '0');
     set_setting($pdo, 'require_email_verification', isset($_POST['require_email_verification']) ? '1' : '0');
     set_setting($pdo, 'smtp_host', trim((string) ($_POST['smtp_host'] ?? '')));
@@ -85,6 +87,17 @@ ob_start();
             <?= setting('allow_registration', '1') === '1' ? 'checked' : '' ?>> <?= e(t('adm.allow_reg')) ?></label>
         <label style="font-weight:400"><input type="checkbox" name="require_email_verification" style="width:auto"
             <?= setting('require_email_verification', '0') === '1' ? 'checked' : '' ?>> <?= e(t('adm.req_verify')) ?></label>
+    </div>
+
+    <div class="card stack">
+        <h2 style="margin:0;font-size:1.1rem"><?= e(t('adm.legal')) ?></h2>
+        <p class="muted" style="margin:0"><?= e(t('adm.legal_note')) ?>
+            <a href="<?= e(url('terms.php')) ?>" target="_blank"><?= e(t('footer.terms')) ?></a> ·
+            <a href="<?= e(url('privacy.php')) ?>" target="_blank"><?= e(t('footer.privacy')) ?></a></p>
+        <div class="field"><label for="contact_email"><?= e(t('adm.contact_email')) ?></label>
+            <input type="email" id="contact_email" name="contact_email" value="<?= e(setting('contact_email', '')) ?>"></div>
+        <div class="field" style="max-width:240px"><label for="scan_retention_days"><?= e(t('adm.retention')) ?></label>
+            <input type="number" id="scan_retention_days" name="scan_retention_days" min="0" max="3650" value="<?= e(setting('scan_retention_days', '0')) ?>"></div>
     </div>
 
     <div class="card stack">

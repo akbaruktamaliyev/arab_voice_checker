@@ -23,6 +23,28 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ?? $appName) . ' · ' . $appName) ?></title>
+    <?php
+        $seoDesc  = $description ?? t('seo.default_desc');
+        $seoNoidx = !empty($noindex) || !empty($GLOBALS['noindex']);
+        $seoUrl   = rtrim((string) preg_replace('~^(https?://[^/]+).*$~', '$1', (string) config('base_url')), '/')
+                  . (string) preg_replace('~index\.php$~', '', (string) strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?'));
+    ?>
+    <meta name="description" content="<?= e($seoDesc) ?>">
+    <?php if ($seoNoidx): ?>
+    <meta name="robots" content="noindex,nofollow">
+    <?php else: ?>
+    <link rel="canonical" href="<?= e($seoUrl) ?>">
+    <?php endif; ?>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="<?= e($appName) ?>">
+    <meta property="og:title" content="<?= e(($title ?? $appName) . ' · ' . $appName) ?>">
+    <meta property="og:description" content="<?= e($seoDesc) ?>">
+    <meta property="og:url" content="<?= e($seoUrl) ?>">
+    <meta property="og:image" content="<?= e(url('assets/img/og.png')) ?>">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="icon" href="<?= e(url('favicon.svg')) ?>" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="<?= e(url('assets/img/apple-touch-icon.png')) ?>">
     <link rel="stylesheet" href="<?= e(url('assets/css/style.css')) ?>">
     <script>
         // Apply the saved theme before paint to avoid a flash.
@@ -71,7 +93,9 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
 
 <footer class="site-footer">
     <div class="wrap footer-inner">
-        <p>&copy; <?= date('Y') ?> <?= e($appName) ?></p>
+        <p>&copy; <?= date('Y') ?> <?= e($appName) ?>
+            · <a href="<?= e(url('terms.php')) ?>"><?= e(t('footer.terms')) ?></a>
+            · <a href="<?= e(url('privacy.php')) ?>"><?= e(t('footer.privacy')) ?></a></p>
         <nav class="lang-switch" aria-label="<?= e(t('nav.language')) ?>">
             <?php
                 // Preserve the current query string when switching language.
