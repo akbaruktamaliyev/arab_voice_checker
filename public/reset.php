@@ -17,7 +17,7 @@ $token = preg_replace('/[^a-f0-9]/', '', $token);
 $user = null;
 if ($token !== '') {
     $stmt = $pdo->prepare('SELECT id FROM users WHERE reset_token = ? AND reset_expires > NOW()');
-    $stmt->execute([$token]);
+    $stmt->execute([hash('sha256', $token)]);
     $user = $stmt->fetch();
 }
 

@@ -8,16 +8,14 @@ require __DIR__ . '/../src/bootstrap.php';
 
 $slug = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($_GET['s'] ?? ''));
 if ($slug === '') {
-    http_response_code(404);
-    exit('Not found');
+    standalone_page('Not found', '<h1>Page not found</h1><p class="m">This link is not valid.</p>', 404);
 }
 
 $stmt = $pdo->prepare('SELECT * FROM bio_pages WHERE slug = ?');
 $stmt->execute([$slug]);
 $bio = $stmt->fetch();
 if (!$bio) {
-    http_response_code(404);
-    exit('This page does not exist.');
+    standalone_page('Not found', '<h1>Page not found</h1><p class="m">This page does not exist.</p>', 404);
 }
 
 $pdo->prepare('UPDATE bio_pages SET views = views + 1 WHERE id = ?')->execute([$bio['id']]);

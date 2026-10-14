@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare(
                 'INSERT INTO users (name, email, password_hash, is_verified, verify_token) VALUES (?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT), $mustVerify ? 0 : 1, $verifyToken]);
+            $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT), $mustVerify ? 0 : 1, $verifyToken !== null ? hash('sha256', $verifyToken) : null]);
             $newId = (int) $pdo->lastInsertId();
 
             if ($mustVerify) {

@@ -16,6 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
 
     set_setting($pdo, 'app_name', trim((string) ($_POST['app_name'] ?? 'QRaft')) ?: 'QRaft');
+    $tzIn = (string) ($_POST['timezone'] ?? 'UTC');
+    set_setting($pdo, 'timezone', in_array($tzIn, DateTimeZone::listIdentifiers(), true) ? $tzIn : 'UTC');
     set_setting($pdo, 'allow_registration', isset($_POST['allow_registration']) ? '1' : '0');
     set_setting($pdo, 'require_email_verification', isset($_POST['require_email_verification']) ? '1' : '0');
     set_setting($pdo, 'smtp_host', trim((string) ($_POST['smtp_host'] ?? '')));
@@ -31,9 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_setting($pdo, 'smtp_secure', $secure);
 
     // Payments (Stripe) + currency + default language.
-    set_setting($pdo, 'stripe_secret', trim((string) ($_POST['stripe_secret'] ?? '')));
     set_setting($pdo, 'stripe_public', trim((string) ($_POST['stripe_public'] ?? '')));
-    set_setting($pdo, 'stripe_webhook_secret', trim((string) ($_POST['stripe_webhook_secret'] ?? '')));
+    if (!empty($_POST['stripe_clear'])) {
+        // Disconnect Stripe: remove both stored secrets.
+        set_setting($pdo, 'stripe_secret', '');
+        set_setting($pdo, 'stripe_webhook_secret', '');
+    } else {
+        // Secrets are write-only: a blank field keeps the stored value.
+        foreach (['stripe_secret', 'stripe_webhook_secret'] as $k) {
+            $v = trim((string) ($_POST[$k] ?? ''));
+            if ($v !== '') {
+                set_setting($pdo, $k, $v);
+            }
+        }
+    }
     set_setting($pdo, 'currency', preg_replace('/[^a-z]/', '', strtolower((string) ($_POST['currency'] ?? 'usd'))) ?: 'usd');
     $dl = in_array($_POST['default_lang'] ?? 'en', $GLOBALS['available_langs'] ?? ['en'], true) ? $_POST['default_lang'] : 'en';
     set_setting($pdo, 'default_lang', $dl);
@@ -58,6 +71,15 @@ ob_start();
         <div class="field">
             <label for="app_name">Site name</label>
             <input type="text" id="app_name" name="app_name" value="<?= e(setting('app_name', 'QRaft')) ?>" required>
+        </div>
+        <div class="field">
+            <label for="timezone">Time zone</label>
+            <select id="timezone" name="timezone">
+                <?php foreach (DateTimeZone::listIdentifiers() as $z): ?>
+                    <option value="<?= e($z) ?>" <?= date_default_timezone_get() === $z ? 'selected' : '' ?>><?= e($z) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <p class="muted" style="font-size:.8rem;margin:6px 0 0">Used for expiry dates, scan times and charts. Now: <?= e(date('Y-m-d H:i')) ?></p>
         </div>
         <label style="font-weight:400"><input type="checkbox" name="allow_registration" style="width:auto"
             <?= setting('allow_registration', '1') === '1' ? 'checked' : '' ?>> Allow new user registration</label>
@@ -99,9 +121,12 @@ ob_start();
         <div class="field"><label for="stripe_public">Publishable key</label>
             <input type="text" id="stripe_public" name="stripe_public" value="<?= e(setting('stripe_public', '')) ?>" placeholder="pk_live_... / pk_test_..."></div>
         <div class="field"><label for="stripe_secret">Secret key</label>
-            <input type="text" id="stripe_secret" name="stripe_secret" value="<?= e(setting('stripe_secret', '')) ?>" placeholder="sk_live_... / sk_test_..."></div>
+            <input type="password" id="stripe_secret" name="stripe_secret" autocomplete="off" placeholder="<?= setting('stripe_secret') ? '•••••• saved — type to replace' : 'sk_live_... / sk_test_...' ?>"></div>
         <div class="field"><label for="stripe_webhook_secret">Webhook signing secret</label>
-            <input type="text" id="stripe_webhook_secret" name="stripe_webhook_secret" value="<?= e(setting('stripe_webhook_secret', '')) ?>" placeholder="whsec_..."></div>
+            <input type="password" id="stripe_webhook_secret" name="stripe_webhook_secret" autocomplete="off" placeholder="<?= setting('stripe_webhook_secret') ? '•••••• saved — type to replace' : 'whsec_...' ?>"></div>
+        <?php if (setting('stripe_secret') || setting('stripe_webhook_secret')): ?>
+            <label class="check"><input type="checkbox" name="stripe_clear" value="1"> Disconnect Stripe (remove saved secret keys)</label>
+        <?php endif; ?>
         <div class="row">
             <div class="field" style="max-width:140px"><label for="currency">Currency</label>
                 <input type="text" id="currency" name="currency" value="<?= e(setting('currency', 'usd')) ?>" maxlength="3"></div>

@@ -66,9 +66,9 @@ function plan_form(array $p = []): string
             <input type="text" name="features" value="<?= $v('features') ?>"></div>
         <label style="font-weight:400"><input type="checkbox" name="is_active" style="width:auto" <?= ($p['is_active'] ?? 1) ? 'checked' : '' ?>> Active</label>
         <div class="row" style="align-items:center">
-            <button class="btn btn-primary" style="flex:0">Save</button>
+            <button class="btn btn-primary">Save</button>
             <?php if (!empty($p['id'])): ?>
-                <span style="flex:0">
+                <span>
                     <button class="btn btn-danger" formnovalidate name="action" value="delete"
                             onclick="return confirm('Delete this plan?');">Delete</button>
                 </span>

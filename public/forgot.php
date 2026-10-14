@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user) {
             $token = bin2hex(random_bytes(32));
             $pdo->prepare('UPDATE users SET reset_token = ?, reset_expires = (NOW() + INTERVAL 1 HOUR) WHERE id = ?')
-                ->execute([$token, $user['id']]);
+                ->execute([hash('sha256', $token), $user['id']]);
             $link = url('reset.php?token=' . $token);
             send_mail($email, app_name() . ' password reset',
                 '<p>Reset your ' . e(app_name()) . ' password:</p>'

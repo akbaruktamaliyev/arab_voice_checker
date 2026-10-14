@@ -8,6 +8,8 @@ return [
     // Navigation
     'nav.generator'   => 'Generator',
     'nav.dashboard'   => 'Dashboard',
+    'nav.pricing'     => 'Pricing',
+    'nav.account'     => 'Account',
     'nav.admin'       => 'Admin',
     'nav.signin'      => 'Sign in',
     'nav.signout'     => 'Sign out',
@@ -28,6 +30,7 @@ return [
     'gen.optional'    => '(optional)',
     'gen.removelogo'  => 'Remove logo',
     'gen.hint'        => 'Fill in the fields to see your QR code',
+    'gen.too_long'    => 'That content is too long for a QR code — please shorten it.',
     'gen.download_png' => 'Download PNG',
     'gen.download_svg' => 'Download SVG',
     'gen.privacy'     => 'Everything is generated on your device — nothing is uploaded.',

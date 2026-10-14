@@ -12,7 +12,7 @@ $token = preg_replace('/[^a-f0-9]/', '', $token);
 $ok = false;
 if ($token !== '') {
     $stmt = $pdo->prepare('SELECT id FROM users WHERE verify_token = ?');
-    $stmt->execute([$token]);
+    $stmt->execute([hash('sha256', $token)]);
     $user = $stmt->fetch();
     if ($user) {
         $pdo->prepare('UPDATE users SET is_verified = 1, verify_token = NULL WHERE id = ?')

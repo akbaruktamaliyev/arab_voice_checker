@@ -77,7 +77,7 @@ ob_start();
     <?php if (!$tokens): ?>
         <p class="muted center" style="padding:16px 0">No tokens yet.</p>
     <?php else: ?>
-        <table class="table">
+        <div class="table-wrap"><table class="table">
             <thead><tr><th>Label</th><th>Last used</th><th>Created</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($tokens as $t): ?>
@@ -95,7 +95,7 @@ ob_start();
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+        </table></div>
     <?php endif; ?>
 </div>
 <?php

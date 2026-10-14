@@ -137,6 +137,22 @@ CREATE TABLE IF NOT EXISTS `bio_links` (
         REFERENCES `bio_pages` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Failed sign-in attempts, for brute-force throttling ---------------------
+CREATE TABLE IF NOT EXISTS `login_attempts` (
+    `id`           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ip_hash`      CHAR(64)        NOT NULL,
+    `attempted_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_la_ip_time` (`ip_hash`, `attempted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Stripe webhook events already handled (idempotency) -------------------
+CREATE TABLE IF NOT EXISTS `stripe_events` (
+    `id`           VARCHAR(120) NOT NULL,
+    `processed_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- API tokens (REST API) ------------------------------------------------
 CREATE TABLE IF NOT EXISTS `api_tokens` (
     `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -167,7 +183,8 @@ INSERT INTO `settings` (`name`, `value`) VALUES
     ('stripe_public', ''),
     ('stripe_webhook_secret', ''),
     ('currency', 'usd'),
-    ('default_lang', 'en')
+    ('default_lang', 'en'),
+    ('timezone', 'UTC')
 ON DUPLICATE KEY UPDATE `name` = `name`;
 
 -- Default plans --------------------------------------------------------

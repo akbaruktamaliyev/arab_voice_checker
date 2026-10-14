@@ -31,7 +31,10 @@ ob_start();
 <div class="grid-2 section">
     <div class="card stack">
         <h2 style="margin:0;font-size:1.1rem"><?= e($plan['name']) ?></h2>
-        <?php if ($expires): ?>
+        <?php $isAdminPlan = (int) $plan['id'] === 0; ?>
+        <?php if ($isAdminPlan): ?>
+            <p class="muted" style="margin:0">Administrators have unlimited access.</p>
+        <?php elseif ($expires): ?>
             <p class="muted" style="margin:0">Active until <?= e(date('Y-m-d', strtotime((string) $expires))) ?></p>
         <?php endif; ?>
         <div>
@@ -44,7 +47,9 @@ ob_start();
                 <span class="muted"><?= $bios ?> / <?= $plan['max_bios'] === null ? '∞' : (int) $plan['max_bios'] ?></span>
             </div>
         </div>
-        <a class="btn btn-primary" href="<?= e(url('pricing.php')) ?>">Change plan</a>
+        <?php if (!$isAdminPlan): ?>
+            <a class="btn btn-primary" href="<?= e(url('pricing.php')) ?>">Change plan</a>
+        <?php endif; ?>
     </div>
 </div>
 <?php

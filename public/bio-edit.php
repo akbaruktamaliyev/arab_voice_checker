@@ -141,7 +141,7 @@ ob_start();
     <?php if (!$links): ?>
         <p class="muted center" style="padding:16px 0">No links yet — add one above.</p>
     <?php else: ?>
-        <table class="table">
+        <div class="table-wrap"><table class="table">
             <tbody>
             <?php foreach ($links as $l): ?>
                 <tr>
@@ -165,7 +165,7 @@ ob_start();
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+        </table></div>
     <?php endif; ?>
 </div>
 <?php

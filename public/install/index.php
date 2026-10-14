@@ -11,6 +11,81 @@ declare(strict_types=1);
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
+/**
+ * Split a SQL script into individual statements.
+ *
+ * Understands '...', "..." and `...` quoting (backslash and doubled-quote
+ * escapes), "-- " / "#" line comments and block comments, so a ";" only ends a
+ * statement when it is outside quotes and comments, and multi-line statements
+ * (such as CREATE TABLE) stay intact.
+ */
+function split_sql(string $sql): array
+{
+    $out = [];
+    $buf = '';
+    $len = strlen($sql);
+
+    for ($i = 0; $i < $len; $i++) {
+        $c = $sql[$i];
+        $n = $sql[$i + 1] ?? '';
+
+        // Line comments: "-- " (dash dash then space/EOL) and "#".
+        if (($c === '-' && $n === '-' && in_array($sql[$i + 2] ?? "\n", [' ', "\t", "\r", "\n"], true)) || $c === '#') {
+            while ($i < $len && $sql[$i] !== "\n") {
+                $i++;
+            }
+            $buf .= "\n";
+            continue;
+        }
+        // Block comments.
+        if ($c === '/' && $n === '*') {
+            $end = strpos($sql, '*/', $i + 2);
+            $i = $end === false ? $len : $end + 1;
+            $buf .= ' ';
+            continue;
+        }
+        // Quoted strings / identifiers.
+        if ($c === "'" || $c === '"' || $c === '`') {
+            $quote = $c;
+            $buf .= $c;
+            for ($i++; $i < $len; $i++) {
+                $d = $sql[$i];
+                $buf .= $d;
+                if ($d === '\\' && $quote !== '`') {
+                    $i++;
+                    if ($i < $len) {
+                        $buf .= $sql[$i];
+                    }
+                    continue;
+                }
+                if ($d === $quote) {
+                    if (($sql[$i + 1] ?? '') === $quote) {   // doubled quote = literal quote
+                        $i++;
+                        $buf .= $quote;
+                        continue;
+                    }
+                    break;
+                }
+            }
+            continue;
+        }
+        if ($c === ';') {
+            $stmt = trim($buf);
+            if ($stmt !== '') {
+                $out[] = $stmt;
+            }
+            $buf = '';
+            continue;
+        }
+        $buf .= $c;
+    }
+    $stmt = trim($buf);
+    if ($stmt !== '') {
+        $out[] = $stmt;
+    }
+    return $out;
+}
+
 $root = dirname(dirname(__DIR__));           // project root
 $configFile = $root . '/config.php';
 $schemaFile = $root . '/database.sql';
@@ -31,6 +106,7 @@ $in = [
     'base_url' => $_POST['base_url'] ?? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
         . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')),
     'app_name' => $_POST['app_name'] ?? 'QRaft',
+    'timezone' => $_POST['timezone'] ?? 'UTC',
     'admin_name' => $_POST['admin_name'] ?? '',
     'admin_email' => $_POST['admin_email'] ?? '',
     'admin_pass' => $_POST['admin_pass'] ?? '',
@@ -54,19 +130,12 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             $pdo->exec("USE `$dbName`");
 
-            // Import the schema (strip CREATE DATABASE / USE / comments so the
-            // chosen DB name is honoured), statement by statement.
-            $sql = (string) file_get_contents($schemaFile);
-            $lines = [];
-            foreach (preg_split('/\R/', $sql) as $line) {
-                $t = ltrim($line);
-                if ($t === '' || str_starts_with($t, '--')
-                    || preg_match('/^CREATE DATABASE/i', $t) || preg_match('/^USE\s/i', $t)) {
+            // Import the schema statement by statement. CREATE DATABASE / USE
+            // are skipped so the database name chosen above is honoured.
+            foreach (split_sql((string) file_get_contents($schemaFile)) as $stmt) {
+                if (preg_match('/^(CREATE\s+DATABASE|USE)\b/i', $stmt)) {
                     continue;
                 }
-                $lines[] = $line;
-            }
-            foreach (array_filter(array_map('trim', explode(';', implode("\n", $lines)))) as $stmt) {
                 $pdo->exec($stmt);
             }
 
@@ -83,6 +152,11 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
                            ON DUPLICATE KEY UPDATE value = VALUES(value)')
                 ->execute(['app_name', trim($in['app_name']) ?: 'QRaft']);
 
+            // Time zone: validated, stored as a setting, and mirrored in config.php.
+            $tz = in_array($in['timezone'], DateTimeZone::listIdentifiers(), true) ? $in['timezone'] : 'UTC';
+            $pdo->prepare('INSERT INTO settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)')
+                ->execute(['timezone', $tz]);
+
             // Write config.php.
             $cfg = "<?php\nreturn " . var_export([
                 'db' => [
@@ -91,6 +165,7 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ],
                 'base_url' => rtrim($in['base_url'], '/'),
                 'app_name' => trim($in['app_name']) ?: 'QRaft',
+                'timezone' => $tz,
                 'code_length' => 6,
             ], true) . ";\n";
 
@@ -155,6 +230,19 @@ if (!$alreadyInstalled && $_SERVER['REQUEST_METHOD'] === 'POST') {
             <h2>Site</h2>
             <label>Base URL</label><input name="base_url" value="<?= htmlspecialchars($in['base_url']) ?>">
             <label>Site name</label><input name="app_name" value="<?= htmlspecialchars($in['app_name']) ?>">
+            <label>Time zone</label>
+            <select name="timezone" id="tz">
+                <?php foreach (DateTimeZone::listIdentifiers() as $z): ?>
+                    <option value="<?= htmlspecialchars($z) ?>" <?= $in['timezone'] === $z ? 'selected' : '' ?>><?= htmlspecialchars($z) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <?php if ($_SERVER['REQUEST_METHOD'] !== 'POST'): ?>
+            <script>
+                // Preselect the visitor's own time zone (first load only).
+                (function () { try { var z = Intl.DateTimeFormat().resolvedOptions().timeZone, s = document.getElementById('tz');
+                    if (z && s && !s.dataset.touched) { for (var i = 0; i < s.options.length; i++) { if (s.options[i].value === z) { s.selectedIndex = i; break; } } } } catch (e) {} })();
+            </script>
+            <?php endif; ?>
 
             <h2>Admin account</h2>
             <label>Name</label><input name="admin_name" value="<?= htmlspecialchars($in['admin_name']) ?>">

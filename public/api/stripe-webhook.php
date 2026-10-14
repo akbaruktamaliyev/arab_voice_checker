@@ -41,16 +41,42 @@ if (($event['type'] ?? '') === 'checkout.session.completed') {
     $session = $event['data']['object'] ?? [];
     $uid = (int) ($session['metadata']['user_id'] ?? 0);
     $pid = (int) ($session['metadata']['plan_id'] ?? 0);
+    $eventId = (string) ($event['id'] ?? '');
 
-    if ($uid > 0 && $pid > 0) {
+    // Idempotency: Stripe delivers events at least once, so the same event can
+    // arrive again. Process each event id only once, or a retry would extend the
+    // customer's plan a second time.
+    $firstTime = true;
+    if ($eventId !== '') {
+        try {
+            $pdo->prepare('INSERT INTO stripe_events (id) VALUES (?)')->execute([$eventId]);
+        } catch (PDOException $e) {
+            $firstTime = $e->getCode() !== '23000'; // duplicate key = already handled
+            if ($firstTime) {
+                throw $e;
+            }
+        }
+    }
+
+    if ($firstTime && $uid > 0 && $pid > 0) {
         $plan = $pdo->prepare('SELECT period FROM plans WHERE id = ?');
         $plan->execute([$pid]);
         $period = $plan->fetchColumn();
         if ($period !== false) {
+            // Buying the plan the customer already has (and that is still
+            // active) extends from its current end date instead of discarding
+            // the days they have left.
+            $cur = $pdo->prepare('SELECT plan_id, plan_expires FROM users WHERE id = ?');
+            $cur->execute([$uid]);
+            $u = $cur->fetch();
+            $stillActive = $u && (int) $u['plan_id'] === $pid
+                && $u['plan_expires'] !== null && strtotime((string) $u['plan_expires']) > time();
+            $base = $stillActive ? 'plan_expires' : 'NOW()'; // fixed literals, never user input
+
             $expires = match ($period) {
-                'year'     => '(NOW() + INTERVAL 1 YEAR)',
+                'year'     => "($base + INTERVAL 1 YEAR)",
                 'lifetime' => 'NULL',
-                default    => '(NOW() + INTERVAL 1 MONTH)',
+                default    => "($base + INTERVAL 1 MONTH)",
             };
             $pdo->prepare("UPDATE users SET plan_id = ?, plan_expires = $expires WHERE id = ?")
                 ->execute([$pid, $uid]);

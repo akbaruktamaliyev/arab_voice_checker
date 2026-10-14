@@ -25,33 +25,17 @@ $stmt = $pdo->prepare(
 $stmt->execute([$code]);
 $qr = $stmt->fetch();
 
-/** Minimal standalone page (no app layout — this is the public scan endpoint). */
-function scan_page(string $title, string $body, int $status = 200): never
-{
-    http_response_code($status);
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
-        . '<meta name="viewport" content="width=device-width,initial-scale=1"><title>' . e($title) . '</title>'
-        . '<style>body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f6fb;color:#1b2333;'
-        . 'display:flex;min-height:100vh;margin:0;align-items:center;justify-content:center}'
-        . '.c{background:#fff;border:1px solid #e3e8f0;border-radius:12px;padding:28px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 24px rgba(20,30,60,.06)}'
-        . 'input{width:100%;padding:10px 12px;border:1px solid #e3e8f0;border-radius:10px;font-size:1rem;box-sizing:border-box;margin:10px 0}'
-        . 'button{width:100%;padding:11px;border:0;border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;font-size:1rem;cursor:pointer}'
-        . 'h1{font-size:1.2rem;margin:0 0 6px}.m{color:#6b7691;font-size:.9rem}</style></head><body><div class="c">'
-        . $body . '</div></body></html>';
-    exit;
-}
-
 if (!$qr) {
-    scan_page('Not found', '<h1>QR code not found</h1><p class="m">This code does not exist.</p>', 404);
+    standalone_page('Not found', '<h1>QR code not found</h1><p class="m">This code does not exist.</p>', 404);
 }
 if (!$qr['is_active']) {
-    scan_page('Paused', '<h1>Temporarily unavailable</h1><p class="m">This QR code is paused.</p>', 410);
+    standalone_page('Paused', '<h1>Temporarily unavailable</h1><p class="m">This QR code is paused.</p>', 410);
 }
 if ($qr['expires_at'] !== null && strtotime((string) $qr['expires_at']) < time()) {
-    scan_page('Expired', '<h1>This QR code has expired</h1><p class="m">The link is no longer active.</p>', 410);
+    standalone_page('Expired', '<h1>This QR code has expired</h1><p class="m">The link is no longer active.</p>', 410);
 }
 if ($qr['scan_limit'] !== null && (int) $qr['scan_count'] >= (int) $qr['scan_limit']) {
-    scan_page('Limit reached', '<h1>Scan limit reached</h1><p class="m">This QR code is no longer available.</p>', 410);
+    standalone_page('Limit reached', '<h1>Scan limit reached</h1><p class="m">This QR code is no longer available.</p>', 410);
 }
 
 // Password gate: show a prompt and only continue on the correct password.
@@ -60,11 +44,21 @@ if ($qr['password_hash'] !== null && $qr['password_hash'] !== '') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !password_verify($given, $qr['password_hash'])) {
         $wrong = $_SERVER['REQUEST_METHOD'] === 'POST'
             ? '<p class="m" style="color:#d64545">Incorrect password.</p>' : '';
-        scan_page('Protected',
+        standalone_page('Protected',
             '<h1>Password required</h1><p class="m">Enter the password to continue.</p>' . $wrong
             . '<form method="post"><input type="password" name="password" autofocus placeholder="Password">'
             . '<button type="submit">Continue</button></form>');
     }
+}
+
+// Link-preview bots (Telegram, WhatsApp, Slack, search crawlers…) and HEAD
+// probes fetch URLs automatically. Forward them without counting a scan, or they
+// would inflate the statistics and burn through a code's scan limit.
+$uaHeader = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD'
+    || preg_match('~bot\b|bot/|crawler|spider|facebookexternalhit|whatsapp|telegrambot|slackbot|skypeuripreview|linkpreview|embedly|vkshare|preview~i', $uaHeader)) {
+    header('Location: ' . $qr['target_url'], true, 302);
+    exit;
 }
 
 // Record the scan (best-effort) and forward.

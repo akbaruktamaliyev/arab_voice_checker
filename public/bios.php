@@ -90,7 +90,7 @@ ob_start();
         <?php if (!$pages): ?>
             <p class="muted center" style="padding:16px 0">No bio pages yet.</p>
         <?php else: ?>
-            <table class="table">
+            <div class="table-wrap"><table class="table">
                 <thead><tr><th>Page</th><th>Links</th><th>Views</th><th></th></tr></thead>
                 <tbody>
                 <?php foreach ($pages as $p): ?>
@@ -110,7 +110,7 @@ ob_start();
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
-            </table>
+            </table></div>
         <?php endif; ?>
     </div>
 </div>

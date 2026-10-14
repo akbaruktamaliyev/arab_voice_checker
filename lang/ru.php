@@ -6,6 +6,8 @@
 return [
     'nav.generator'   => 'Генератор',
     'nav.dashboard'   => 'Панель',
+    'nav.pricing'     => 'Тарифы',
+    'nav.account'     => 'Аккаунт',
     'nav.admin'       => 'Админка',
     'nav.signin'      => 'Войти',
     'nav.signout'     => 'Выйти',
@@ -25,6 +27,7 @@ return [
     'gen.optional'    => '(необязательно)',
     'gen.removelogo'  => 'Убрать логотип',
     'gen.hint'        => 'Заполните поля, чтобы увидеть QR-код',
+    'gen.too_long'    => 'Слишком длинное содержимое для QR-кода — сократите его.',
     'gen.download_png' => 'Скачать PNG',
     'gen.download_svg' => 'Скачать SVG',
     'gen.privacy'     => 'Всё создаётся на вашем устройстве — ничего не загружается.',

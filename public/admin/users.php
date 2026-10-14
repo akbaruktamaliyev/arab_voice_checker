@@ -38,6 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Admin rights removed.', 'success');
             break;
         case 'delete':
+            // Remove the user's uploaded logo files first — the FK cascade only
+            // deletes database rows, which would leave the files orphaned on disk.
+            $logos = $pdo->prepare('SELECT logo_path FROM qr_codes WHERE user_id = ? AND logo_path IS NOT NULL');
+            $logos->execute([$target]);
+            foreach ($logos->fetchAll(PDO::FETCH_COLUMN) as $path) {
+                delete_logo($path);
+            }
             // FK cascades remove the user's codes and scans.
             $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$target]);
             flash('User deleted.', 'info');
@@ -70,7 +77,7 @@ ob_start();
 </div>
 
 <div class="card">
-    <table class="table">
+    <div class="table-wrap"><table class="table">
         <thead><tr><th>User</th><th>Codes</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
         <?php foreach ($users as $u): $id = (int) $u['id']; ?>
@@ -91,7 +98,7 @@ ob_start();
             </tr>
         <?php endforeach; ?>
         </tbody>
-    </table>
+    </table></div>
 </div>
 <?php
 $content = ob_get_clean();

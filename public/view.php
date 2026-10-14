@@ -149,7 +149,7 @@ ob_start();
 <div class="grid-2 section">
     <div class="card stack center">
         <div class="qr-preview" id="qr-holder"></div>
-        <div class="row">
+        <div class="row nowrap">
             <button type="button" id="qr-download-png" class="btn btn-primary">PNG</button>
             <button type="button" id="qr-download-svg" class="btn btn-ghost">SVG</button>
             <button type="button" id="qr-download-pdf" class="btn btn-ghost">PDF</button>
@@ -242,26 +242,22 @@ ob_start();
             </form>
         </div>
 
-        <div class="card row" style="align-items:center">
-            <form method="post" style="flex:0">
-                <?= csrf_field() ?>
-                <input type="hidden" name="action" value="toggle">
-                <button type="submit" class="btn btn-ghost">
-                    <?= $qr['is_active'] ? 'Pause' : 'Activate' ?>
-                </button>
-            </form>
-            <form method="post" action="<?= e(url('delete.php')) ?>" style="flex:0"
-                  onsubmit="return confirm('Delete this QR code and its scan history?');">
-                <?= csrf_field() ?>
-                <input type="hidden" name="id" value="<?= (int) $qr['id'] ?>">
-                <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
-            <div style="flex:1;text-align:right" class="muted">
-                Status:
-                <span class="badge <?= $qr['is_active'] ? 'badge-on' : 'badge-off' ?>">
-                    <?= $qr['is_active'] ? 'Active' : 'Paused' ?>
-                </span>
+        <?php [$statusLabel, $statusClass] = code_status($qr); ?>
+        <div class="card actions" style="justify-content:space-between">
+            <div class="actions">
+                <form method="post">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="toggle">
+                    <button type="submit" class="btn btn-ghost"><?= $qr['is_active'] ? 'Pause' : 'Activate' ?></button>
+                </form>
+                <form method="post" action="<?= e(url('delete.php')) ?>"
+                      onsubmit="return confirm('Delete this QR code and its scan history?');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= (int) $qr['id'] ?>">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
             </div>
+            <div class="muted">Status: <span class="badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span></div>
         </div>
     </div>
 </div>
@@ -364,12 +360,12 @@ ob_start();
         document.getElementById('qr-download-pdf').addEventListener('click', function () {
             withJsPDF(function () {
                 var canvas = QRaftRender.toCanvas(qr, 1000, fg.value, bg.value, logoImg);
-                var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+                var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true });
                 var pw = doc.internal.pageSize.getWidth();
                 doc.setFontSize(18);
                 doc.text(<?= json_encode($qr['title']) ?>, pw / 2, 30, { align: 'center' });
                 var size = 100;
-                doc.addImage(canvas.toDataURL('image/png'), 'PNG', (pw - size) / 2, 45, size, size);
+                doc.addImage(canvas.toDataURL('image/png'), 'PNG', (pw - size) / 2, 45, size, size, undefined, 'FAST');
                 doc.setFontSize(11); doc.setTextColor(120);
                 doc.text(url, pw / 2, 160, { align: 'center' });
                 doc.save(name + '.pdf');

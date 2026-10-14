@@ -67,6 +67,13 @@ function app_name(): string
  */
 function user_plan(PDO $pdo, int $uid): array
 {
+    // Administrators run the site — they are never limited by plan quotas.
+    $role = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+    $role->execute([$uid]);
+    if ($role->fetchColumn() === 'admin') {
+        return ['id' => 0, 'name' => 'Admin', 'max_codes' => null, 'max_bios' => null, 'price' => 0, 'period' => 'lifetime'];
+    }
+
     $stmt = $pdo->prepare(
         'SELECT p.* FROM users u JOIN plans p ON p.id = u.plan_id
          WHERE u.id = ? AND (u.plan_expires IS NULL OR u.plan_expires > NOW())'
@@ -319,4 +326,42 @@ function clean_url(string $value): ?string
         return null;
     }
     return $value;
+}
+
+/** Human status for a code row: [label, badge class]. */
+function code_status(array $c): array
+{
+    if (!$c['is_active']) {
+        return ['Paused', 'badge-off'];
+    }
+    if ($c['expires_at'] !== null && strtotime((string) $c['expires_at']) < time()) {
+        return ['Expired', 'badge-warn'];
+    }
+    if ($c['scan_limit'] !== null && (int) $c['scan_count'] >= (int) $c['scan_limit']) {
+        return ['Limit reached', 'badge-warn'];
+    }
+    return ['Active', 'badge-on'];
+}
+
+/**
+ * Render a small standalone message page (no app layout) and stop. Used by the
+ * public endpoints visitors see directly: scanned QR codes and bio pages.
+ * Follows the visitor's light/dark preference.
+ */
+function standalone_page(string $title, string $body, int $status = 200): never
+{
+    http_response_code($status);
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark">'
+        . '<title>' . e($title) . '</title><style>'
+        . ':root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f0;--text:#1b2333;--muted:#6b7691;--input:#fff}'
+        . '@media(prefers-color-scheme:dark){:root{--bg:#0f1420;--card:#171d2b;--line:#2a3346;--text:#e7ecf5;--muted:#93a0b8;--input:#0f1420}}'
+        . 'body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);'
+        . 'display:flex;min-height:100vh;margin:0;align-items:center;justify-content:center}'
+        . '.c{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 24px rgba(20,30,60,.08)}'
+        . 'input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:1rem;box-sizing:border-box;margin:10px 0;background:var(--input);color:var(--text)}'
+        . 'button{width:100%;padding:11px;border:0;border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;font-size:1rem;cursor:pointer}'
+        . 'h1{font-size:1.2rem;margin:0 0 6px}.m{color:var(--muted);font-size:.9rem}a{color:#6d64f0}</style></head><body><div class="c">'
+        . $body . '</div></body></html>';
+    exit;
 }

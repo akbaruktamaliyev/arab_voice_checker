@@ -28,6 +28,10 @@ ob_start();
     </div>
 </div>
 
+<?php if (is_dir(__DIR__ . '/../install')): ?>
+    <div class="flash flash-warn"><strong>Security:</strong> delete the <code>public/install/</code> folder — the installer is no longer needed and should not stay on a live site.</div>
+<?php endif; ?>
+
 <div class="stats section">
     <div class="stat"><div class="num"><?= $stats['users'] ?></div><div class="lbl">Users</div></div>
     <div class="stat"><div class="num"><?= $stats['codes'] ?></div><div class="lbl">Dynamic codes</div></div>
@@ -37,7 +41,7 @@ ob_start();
 <div class="card">
     <div class="section-head"><h2 style="margin:0">Newest users</h2>
         <a href="<?= e(url('admin/users.php')) ?>">All users →</a></div>
-    <table class="table">
+    <div class="table-wrap"><table class="table">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
         <tbody>
         <?php foreach ($recent as $u): ?>
@@ -49,7 +53,7 @@ ob_start();
             </tr>
         <?php endforeach; ?>
         </tbody>
-    </table>
+    </table></div>
 </div>
 <?php
 $content = ob_get_clean();

@@ -31,6 +31,9 @@ host and it runs.
 - Web installer: database setup, schema import and admin creation from the browser
 - Admin panel: user management (suspend, promote, delete) and site settings
 - Password reset and optional email verification over SMTP (dependency-free mailer)
+- Account page: edit profile, change password, delete account (cleans up uploads)
+- Sign-in brute-force lockout, hashed reset/verify tokens, Secure/HttpOnly cookies and
+  baseline security headers; one configurable time zone for PHP and MySQL
 - Configurable site name, registration toggle and SMTP, all from the admin UI
 - Light / dark theme with a one-click toggle
 - Multi-language (English, Russian, Uzbek) with a language switcher and RTL support
@@ -43,7 +46,8 @@ host and it runs.
 - Bio pages: a hosted Linktree-style link page per handle, with themes
 - Optional protection per code: password, expiry date and scan limit
 - Every scan is counted; pause or delete a code at any point
-- Per-code analytics: 14-day chart plus device / OS / browser breakdown
+- Per-code analytics: 14-day chart plus device / OS / browser breakdown; link-preview
+  bots and HEAD probes are not counted as scans
 - Export scans to CSV, per code or across every code
 
 ## Why buyers like it

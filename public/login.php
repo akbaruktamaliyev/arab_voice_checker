@@ -19,22 +19,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string) ($_POST['email'] ?? ''));
     $pass  = (string) ($_POST['password'] ?? '');
 
-    $stmt = $pdo->prepare('SELECT id, password_hash, is_blocked, is_verified FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($pass, $user['password_hash'])) {
-        if ((int) $user['is_blocked'] === 1) {
-            $error = t('auth.suspended');
-        } elseif (setting('require_email_verification', '0') === '1' && (int) $user['is_verified'] === 0) {
-            $error = t('auth.verify_first');
-        } else {
-            login_user((int) $user['id']);
-            redirect('dashboard.php');
-        }
+    if (login_locked($pdo)) {
+        // Too many recent failures from this visitor: refuse without even
+        // checking the credentials, so guessing gets no feedback.
+        $error = 'Too many failed attempts. Please wait ' . LOGIN_WINDOW_MINUTES . ' minutes and try again.';
     } else {
-        // Same message whether the email or the password was wrong.
-        $error = t('auth.invalid');
+        $stmt = $pdo->prepare('SELECT id, password_hash, is_blocked, is_verified FROM users WHERE email = ?');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($pass, $user['password_hash'])) {
+            if ((int) $user['is_blocked'] === 1) {
+                $error = t('auth.suspended');
+            } elseif (setting('require_email_verification', '0') === '1' && (int) $user['is_verified'] === 0) {
+                $error = t('auth.verify_first');
+            } else {
+                login_succeeded($pdo);
+                login_user((int) $user['id']);
+                redirect('dashboard.php');
+            }
+        } else {
+            // Same message whether the email or the password was wrong.
+            login_failed($pdo);
+            $error = t('auth.invalid');
+        }
     }
 }
 

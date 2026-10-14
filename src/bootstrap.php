@@ -59,16 +59,39 @@ try {
 }
 $GLOBALS['settings'] = $settings;
 
+// --- Time zone --------------------------------------------------------
+// One time zone for the whole app: PHP and the MySQL session must agree, or
+// expiry dates, "last 14 days" charts and scan times drift by the UTC offset.
+$tz = (string) (($settings['timezone'] ?? '') ?: ($config['timezone'] ?? 'UTC'));
+if (!in_array($tz, DateTimeZone::listIdentifiers(), true)) {
+    $tz = 'UTC';
+}
+date_default_timezone_set($tz);
+$pdo->exec("SET time_zone = '" . date('P') . "'");
+
 // --- Session ----------------------------------------------------------
+// Mark the cookie Secure whenever the request really arrived over HTTPS
+// (directly or via a proxy), so it is never sent over plain HTTP.
+$onHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
 session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax',
+    'secure'   => $onHttps,
 ]);
+ini_set('session.use_strict_mode', '1'); // never adopt a session id the server did not issue
 session_start();
+
+// Baseline security headers: no MIME sniffing, no framing by other sites
+// (clickjacking on admin/billing pages), and a conservative referrer policy.
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 require __DIR__ . '/helpers.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/mailer.php';
+require __DIR__ . '/throttle.php';
 
 // --- Language (i18n) --------------------------------------------------
 $availableLangs = ['en', 'ru', 'uz'];
@@ -77,7 +100,11 @@ $availableLangs = ['en', 'ru', 'uz'];
 if (isset($_GET['setlang']) && in_array($_GET['setlang'], $availableLangs, true)) {
     $_SESSION['lang'] = $_GET['setlang'];
     setcookie('lang', $_GET['setlang'], time() + 31536000, '/');
-    header('Location: ' . strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?'));
+    // Back to the same page, keeping every other query parameter.
+    $rest = $_GET;
+    unset($rest['setlang']);
+    $path = strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?');
+    header('Location: ' . $path . ($rest ? '?' . http_build_query($rest) : ''));
     exit;
 }
 

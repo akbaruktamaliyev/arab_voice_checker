@@ -21,13 +21,13 @@ ob_start();
 <section class="section">
     <div class="grid-3">
         <?php foreach ($plans as $p): $isCurrent = $current && (int) $current['id'] === (int) $p['id']; ?>
-            <div class="card stack" style="<?= $p['sort'] == 1 ? 'border-color:var(--primary)' : '' ?>">
+            <div class="card plan-card <?= $p['sort'] == 1 ? 'featured' : '' ?>">
                 <h2 style="margin:0"><?= e($p['name']) ?></h2>
                 <div>
-                    <span style="font-size:1.8rem;font-weight:700"><?= e($p['price'] == 0 ? 'Free' : format_price((int) $p['price'])) ?></span>
+                    <span class="price"><?= e(format_price((int) $p['price'])) ?></span>
                     <?php if ($p['price'] > 0): ?><span class="muted">/ <?= e($p['period']) ?></span><?php endif; ?>
                 </div>
-                <ul class="muted" style="padding-left:18px;margin:4px 0;font-size:.9rem">
+                <ul class="muted">
                     <?php foreach (array_filter(array_map('trim', explode(',', (string) $p['features']))) as $f): ?>
                         <li><?= e($f) ?></li>
                     <?php endforeach; ?>

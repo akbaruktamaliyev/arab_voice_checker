@@ -1,11 +1,15 @@
 <?php
 /**
- * QRaft — sign out.
+ * QRaft — sign out. POST-only with a CSRF token, so a stray link or image on
+ * another site cannot log a visitor out.
  */
 
 declare(strict_types=1);
 require __DIR__ . '/../src/bootstrap.php';
 
-logout_user();
-flash('You have been signed out.', 'info');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    logout_user();
+    flash('You have been signed out.', 'info');
+}
 redirect('index.php');

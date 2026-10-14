@@ -149,25 +149,41 @@
         return o;
     }
 
+    function setDownloads(enabled) {
+        [pngBtn, svgBtn].forEach(function (b) {
+            if (enabled) b.removeAttribute('disabled'); else b.setAttribute('disabled', 'disabled');
+        });
+    }
+
+    // Show the placeholder (or an error) instead of a QR code.
+    function showHint(message) {
+        var hint = document.getElementById('qr-hint');
+        if (qr) { holder.innerHTML = ''; qr = null; }
+        if (hint) {
+            hint.textContent = message || hint.getAttribute('data-default') || '';
+            hint.style.display = '';
+        }
+        setDownloads(false);
+    }
+
     function render() {
         var value = buildValue();
         var hint = document.getElementById('qr-hint');
-        if (!value) {
-            if (qr) { holder.innerHTML = ''; qr = null; }
-            if (hint) hint.style.display = '';
-            pngBtn.setAttribute('disabled', 'disabled');
-            svgBtn.setAttribute('disabled', 'disabled');
+        if (!value) { showHint(); return; }
+        try {
+            if (!qr) {
+                qr = new QRCodeStyling(options(value));
+                qr.append(holder);
+            } else {
+                qr.update(options(value));
+            }
+        } catch (err) {
+            // e.g. "code length overflow" when the content is too long for a QR.
+            showHint(hint && hint.getAttribute('data-too-long') || 'That content is too long for a QR code.');
             return;
         }
         if (hint) hint.style.display = 'none';
-        if (!qr) {
-            qr = new QRCodeStyling(options(value));
-            qr.append(holder);
-        } else {
-            qr.update(options(value));
-        }
-        pngBtn.removeAttribute('disabled');
-        svgBtn.removeAttribute('disabled');
+        setDownloads(true);
     }
 
     function buildFields() {

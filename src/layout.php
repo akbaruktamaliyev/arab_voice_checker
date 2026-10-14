@@ -38,21 +38,26 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
         <a class="brand" href="<?= e(url('index.php')) ?>">
             <span class="brand-mark">▦</span> <?= e($appName) ?>
         </a>
-        <nav class="nav">
+        <nav class="nav" id="site-nav" aria-label="Main">
             <a href="<?= e(url('index.php')) ?>"><?= e(t('nav.generator')) ?></a>
-            <a href="<?= e(url('pricing.php')) ?>">Pricing</a>
+            <a href="<?= e(url('pricing.php')) ?>"><?= e(t('nav.pricing')) ?></a>
             <?php if ($uid !== null): ?>
                 <a href="<?= e(url('dashboard.php')) ?>"><?= e(t('nav.dashboard')) ?></a>
+                <a href="<?= e(url('account.php')) ?>"><?= e(t('nav.account')) ?></a>
                 <?php if ($isAdmin): ?>
                     <a href="<?= e(url('admin/index.php')) ?>"><?= e(t('nav.admin')) ?></a>
                 <?php endif; ?>
-                <a class="btn btn-ghost" href="<?= e(url('logout.php')) ?>"><?= e(t('nav.signout')) ?></a>
+                <form method="post" action="<?= e(url('logout.php')) ?>" class="nav-form">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-ghost btn-sm"><?= e(t('nav.signout')) ?></button>
+                </form>
             <?php else: ?>
                 <a href="<?= e(url('login.php')) ?>"><?= e(t('nav.signin')) ?></a>
-                <a class="btn btn-primary" href="<?= e(url('register.php')) ?>"><?= e(t('nav.getstarted')) ?></a>
+                <a class="btn btn-primary btn-sm" href="<?= e(url('register.php')) ?>"><?= e(t('nav.getstarted')) ?></a>
             <?php endif; ?>
-            <button type="button" id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
         </nav>
+        <button type="button" id="theme-toggle" class="icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+        <button type="button" id="nav-toggle" class="icon-btn nav-toggle" aria-label="Menu" aria-controls="site-nav" aria-expanded="false">☰</button>
     </div>
 </header>
 
@@ -65,31 +70,47 @@ $isAdmin  = $viewer !== null && $viewer['role'] === 'admin';
 </main>
 
 <footer class="site-footer">
-    <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <p style="margin:0">&copy; <?= date('Y') ?> <?= e($appName) ?></p>
-        <nav style="display:flex;gap:10px;font-size:.85rem">
+    <div class="wrap footer-inner">
+        <p>&copy; <?= date('Y') ?> <?= e($appName) ?></p>
+        <nav class="lang-switch" aria-label="Language">
             <?php
                 // Preserve the current query string when switching language.
                 $qs = $_GET; unset($qs['setlang']);
                 foreach (($GLOBALS['available_langs'] ?? ['en']) as $lc):
                     $href = '?' . http_build_query($qs + ['setlang' => $lc]);
             ?>
-                <a href="<?= e($href) ?>" style="<?= lang_code() === $lc ? 'font-weight:700' : '' ?>"><?= e(strtoupper($lc)) ?></a>
+                <a href="<?= e($href) ?>" class="<?= lang_code() === $lc ? 'active' : '' ?>"><?= e(strtoupper($lc)) ?></a>
             <?php endforeach; ?>
         </nav>
     </div>
 </footer>
 
 <script>
-    // Dark-mode toggle, remembered per browser.
     (function () {
-        var btn = document.getElementById('theme-toggle');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-            var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', cur);
-            try { localStorage.setItem('qraft-theme', cur); } catch (e) {}
-        });
+        // Dark-mode toggle, remembered per browser. When no theme was chosen
+        // yet, start from the OS preference so the very first click flips it.
+        var root = document.documentElement;
+        var tbtn = document.getElementById('theme-toggle');
+        if (tbtn) {
+            tbtn.addEventListener('click', function () {
+                var cur = root.getAttribute('data-theme');
+                if (!cur) {
+                    cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                var next = cur === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+                try { localStorage.setItem('qraft-theme', next); } catch (e) {}
+            });
+        }
+        // Mobile menu.
+        var nbtn = document.getElementById('nav-toggle');
+        var nav = document.getElementById('site-nav');
+        if (nbtn && nav) {
+            nbtn.addEventListener('click', function () {
+                var open = nav.classList.toggle('open');
+                nbtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
     })();
 </script>
 </body>

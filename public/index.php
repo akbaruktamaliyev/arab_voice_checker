@@ -89,9 +89,11 @@ ob_start();
         </div>
 
         <div class="card stack center">
-            <div class="qr-preview" id="qr-holder"></div>
-            <span class="muted" id="qr-hint"><?= e(t('gen.hint')) ?></span>
-            <div class="row">
+            <div class="qr-preview">
+                <div id="qr-holder"></div>
+                <span class="muted" id="qr-hint" data-default="<?= e(t('gen.hint')) ?>" data-too-long="<?= e(t('gen.too_long')) ?>"><?= e(t('gen.hint')) ?></span>
+            </div>
+            <div class="row nowrap">
                 <button type="button" id="qr-download-png" class="btn btn-primary" disabled><?= e(t('gen.download_png')) ?></button>
                 <button type="button" id="qr-download-svg" class="btn btn-ghost" disabled><?= e(t('gen.download_svg')) ?></button>
             </div>
