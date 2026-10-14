@@ -29,6 +29,10 @@ ob_start();
                     <option value="sms">SMS</option>
                     <option value="wifi">Wi-Fi network</option>
                     <option value="vcard">Contact card (vCard)</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="geo">Location (GPS)</option>
+                    <option value="event">Calendar event</option>
+                    <option value="crypto">Crypto payment</option>
                 </select>
             </div>
             <div id="qr-fields"></div>

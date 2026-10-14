@@ -40,6 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Optional protection.
+    $pw        = (string) ($_POST['password'] ?? '');
+    $pwHash    = $pw !== '' ? password_hash($pw, PASSWORD_DEFAULT) : null;
+    $expires   = parse_expiry((string) ($_POST['expires_at'] ?? ''));
+    $scanLimit = parse_scan_limit((string) ($_POST['scan_limit'] ?? ''));
+
     $logoPath = null;
     if (!$errors) {
         try {
@@ -52,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         $code = $slug_in !== '' ? $slug_in : generate_code($pdo, (int) config('code_length', 6));
         $stmt = $pdo->prepare(
-            'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color, logo_path)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO qr_codes (user_id, code, title, target_url, fg_color, bg_color, logo_path, password_hash, expires_at, scan_limit)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([current_user_id(), $code, $title_in, $target, $fg, $bg, $logoPath]);
+        $stmt->execute([current_user_id(), $code, $title_in, $target, $fg, $bg, $logoPath, $pwHash, $expires, $scanLimit]);
         flash('Dynamic QR code created.', 'success');
         redirect('view.php?id=' . (int) $pdo->lastInsertId());
     }
@@ -109,6 +115,27 @@ ob_start();
                 <label for="logo">Centre logo <span class="muted">(optional, PNG/JPG/WebP, max 1 MB)</span></label>
                 <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/webp">
             </div>
+
+            <details>
+                <summary style="cursor:pointer;font-weight:600;margin:4px 0">Protection <span class="muted">(optional)</span></summary>
+                <div class="stack" style="margin-top:12px">
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <input type="text" id="password" name="password" placeholder="Visitors must enter this to continue">
+                    </div>
+                    <div class="row">
+                        <div class="field">
+                            <label for="expires_at">Expires at</label>
+                            <input type="datetime-local" id="expires_at" name="expires_at" value="<?= e($_POST['expires_at'] ?? '') ?>">
+                        </div>
+                        <div class="field">
+                            <label for="scan_limit">Scan limit</label>
+                            <input type="number" id="scan_limit" name="scan_limit" min="1" placeholder="Unlimited" value="<?= e($_POST['scan_limit'] ?? '') ?>">
+                        </div>
+                    </div>
+                </div>
+            </details>
+
             <button type="submit" class="btn btn-primary btn-block">Create QR code</button>
         </form>
         <p class="center"><a href="<?= e(url('dashboard.php')) ?>">← Back to dashboard</a></p>

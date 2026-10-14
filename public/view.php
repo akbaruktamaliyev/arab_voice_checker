@@ -62,11 +62,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     delete_logo($qr['logo_path']);
                     $logoPath = null;
                 }
+
+                // Protection: keep, replace or remove the password; expiry/limit.
+                $pwHash = $qr['password_hash'];
+                if (!empty($_POST['remove_password'])) {
+                    $pwHash = null;
+                } elseif (trim((string) ($_POST['password'] ?? '')) !== '') {
+                    $pwHash = password_hash(trim((string) $_POST['password']), PASSWORD_DEFAULT);
+                }
+                $expires   = parse_expiry((string) ($_POST['expires_at'] ?? ''));
+                $scanLimit = parse_scan_limit((string) ($_POST['scan_limit'] ?? ''));
+
                 $u = $pdo->prepare(
-                    'UPDATE qr_codes SET code = ?, title = ?, target_url = ?, fg_color = ?, bg_color = ?, logo_path = ?
+                    'UPDATE qr_codes SET code = ?, title = ?, target_url = ?, fg_color = ?, bg_color = ?,
+                        logo_path = ?, password_hash = ?, expires_at = ?, scan_limit = ?
                      WHERE id = ? AND user_id = ?'
                 );
-                $u->execute([$newSlug, $newTitle, $newTarget, $newFg, $newBg, $logoPath, $id, $uid]);
+                $u->execute([$newSlug, $newTitle, $newTarget, $newFg, $newBg, $logoPath,
+                             $pwHash, $expires, $scanLimit, $id, $uid]);
                 flash('Changes saved.', 'success');
             } catch (RuntimeException $e) {
                 // store_logo() failed; the old logo and row are left untouched.
@@ -98,6 +111,20 @@ for ($i = 13; $i >= 0; $i--) {
     $days[] = ['date' => $d, 'n' => $byDay[$d] ?? 0];
 }
 $maxN = max(1, max(array_column($days, 'n')));
+
+// Breakdown by device / OS / browser (top values).
+function breakdown(PDO $pdo, int $id, string $col): array
+{
+    $stmt = $pdo->prepare(
+        "SELECT COALESCE($col, 'Unknown') AS k, COUNT(*) AS n
+         FROM qr_scans WHERE qr_id = ? GROUP BY k ORDER BY n DESC LIMIT 5"
+    );
+    $stmt->execute([$id]);
+    return $stmt->fetchAll();
+}
+$byDevice  = breakdown($pdo, $id, 'device');
+$byOs      = breakdown($pdo, $id, 'os');
+$byBrowser = breakdown($pdo, $id, 'browser');
 
 $shortUrl = url('q/' . $qr['code']);
 $logoUrl  = $qr['logo_path'] ? url($qr['logo_path']) : null;
@@ -157,6 +184,35 @@ ob_start();
                         </label>
                     <?php endif; ?>
                 </div>
+
+                <details <?= ($qr['password_hash'] || $qr['expires_at'] || $qr['scan_limit']) ? 'open' : '' ?>>
+                    <summary style="cursor:pointer;font-weight:600;margin:4px 0">Protection</summary>
+                    <div class="stack" style="margin-top:12px">
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input type="text" id="password" name="password"
+                                   placeholder="<?= $qr['password_hash'] ? '•••••• (set — leave blank to keep)' : 'None' ?>">
+                            <?php if ($qr['password_hash']): ?>
+                                <label class="muted" style="font-weight:400;margin-top:8px">
+                                    <input type="checkbox" name="remove_password" value="1" style="width:auto"> Remove password
+                                </label>
+                            <?php endif; ?>
+                        </div>
+                        <div class="row">
+                            <div class="field">
+                                <label for="expires_at">Expires at</label>
+                                <input type="datetime-local" id="expires_at" name="expires_at"
+                                       value="<?= e(to_datetime_local($qr['expires_at'])) ?>">
+                            </div>
+                            <div class="field">
+                                <label for="scan_limit">Scan limit</label>
+                                <input type="number" id="scan_limit" name="scan_limit" min="1"
+                                       placeholder="Unlimited" value="<?= e((string) ($qr['scan_limit'] ?? '')) ?>">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
                 <button type="submit" class="btn btn-primary btn-block">Save changes</button>
             </form>
         </div>
@@ -207,11 +263,34 @@ ob_start();
                   rx="3" fill="#4f46e5" opacity="<?= $d['n'] ? 1 : .25 ?>"></rect>
             <?php if ($i % 2 === 0): ?>
                 <text x="<?= $x + ($barW - 8) / 2 ?>" y="150" font-size="9"
-                      fill="#6b7691" text-anchor="middle"><?= date('d.m', strtotime($d['date'])) ?></text>
+                      fill="var(--muted)" text-anchor="middle"><?= date('d.m', strtotime($d['date'])) ?></text>
             <?php endif; ?>
         <?php endforeach; ?>
     </svg>
 </div>
+
+<?php if ((int) $qr['scan_count'] > 0): ?>
+<?php
+    $panel = function (string $heading, array $rows): string {
+        $total = array_sum(array_column($rows, 'n')) ?: 1;
+        $html = '<div class="card"><h2 style="margin:0 0 12px;font-size:1.05rem">' . e($heading) . '</h2>';
+        foreach ($rows as $r) {
+            $pct = round($r['n'] / $total * 100);
+            $html .= '<div style="margin-bottom:10px">'
+                . '<div style="display:flex;justify-content:space-between;font-size:.88rem">'
+                . '<span>' . e($r['k']) . '</span><span class="muted">' . (int) $r['n'] . '</span></div>'
+                . '<div style="height:6px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:3px">'
+                . '<div style="height:100%;width:' . $pct . '%;background:var(--primary)"></div></div></div>';
+        }
+        return $html . '</div>';
+    };
+?>
+<div class="grid-3 section">
+    <?= $panel('By device', $byDevice) ?>
+    <?= $panel('By OS', $byOs) ?>
+    <?= $panel('By browser', $byBrowser) ?>
+</div>
+<?php endif; ?>
 
 <script src="<?= e(url('assets/js/qrcode-generator.min.js')) ?>"></script>
 <script src="<?= e(url('assets/js/qrender.js')) ?>"></script>

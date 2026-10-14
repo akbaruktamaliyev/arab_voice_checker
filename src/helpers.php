@@ -159,6 +159,30 @@ function clean_color(string $value, string $fallback): string
     return preg_match('/^#[0-9a-fA-F]{6}$/', $value) ? strtolower($value) : $fallback;
 }
 
+/** Parse an optional expiry datetime into 'Y-m-d H:i:s', or null. */
+function parse_expiry(string $value): ?string
+{
+    $value = trim($value);
+    if ($value === '') {
+        return null;
+    }
+    $ts = strtotime($value);
+    return $ts ? date('Y-m-d H:i:s', $ts) : null;
+}
+
+/** Parse an optional positive scan limit, or null. */
+function parse_scan_limit(string $value): ?int
+{
+    $value = trim($value);
+    return ($value !== '' && ctype_digit($value) && (int) $value > 0) ? (int) $value : null;
+}
+
+/** Format a stored datetime for an <input type="datetime-local"> value. */
+function to_datetime_local(?string $value): string
+{
+    return $value ? date('Y-m-d\TH:i', strtotime((string) $value)) : '';
+}
+
 /** Absolute path of the logo uploads directory (created on demand). */
 function logo_dir(): string
 {

@@ -46,8 +46,30 @@
             { name: 'phone', label: 'Phone', type: 'text', ph: 'Optional' },
             { name: 'email', label: 'Email', type: 'email', ph: 'Optional' },
             { name: 'url', label: 'Website', type: 'text', ph: 'Optional' }
+        ],
+        whatsapp: [
+            { name: 'phone', label: 'Phone (with country code, no +)', type: 'text', ph: '998901234567' },
+            { name: 'text', label: 'Message', type: 'text', ph: 'Optional' }
+        ],
+        geo: [
+            { name: 'lat', label: 'Latitude', type: 'text', ph: '41.311081' },
+            { name: 'lng', label: 'Longitude', type: 'text', ph: '69.240562' }
+        ],
+        event: [
+            { name: 'summary', label: 'Event title', type: 'text', ph: 'Meeting' },
+            { name: 'location', label: 'Location', type: 'text', ph: 'Optional' },
+            { name: 'start', label: 'Starts', type: 'datetime' },
+            { name: 'end', label: 'Ends', type: 'datetime' }
+        ],
+        crypto: [
+            { name: 'coin', label: 'Coin', type: 'select', options: ['bitcoin', 'ethereum', 'litecoin'] },
+            { name: 'address', label: 'Wallet address', type: 'text', ph: 'Address' },
+            { name: 'amount', label: 'Amount', type: 'text', ph: 'Optional' }
         ]
     };
+
+    // "2026-01-02T15:04" -> "20260102T150400" for iCalendar.
+    function icalTime(v) { return (v || '').replace(/[-:]/g, '').replace('T', 'T') + '00'; }
 
     function esc(v) { return (v || '').replace(/([\\;,:"])/g, '\\$1'); }
 
@@ -80,6 +102,24 @@
                     (g('email') ? 'EMAIL:' + g('email') + '\n' : '') +
                     (g('url')   ? 'URL:' + g('url') + '\n' : '') +
                     'END:VCARD';
+            case 'whatsapp':
+                if (!g('phone')) return '';
+                return 'https://wa.me/' + g('phone').replace(/[^0-9]/g, '') +
+                    (g('text') ? '?text=' + encodeURIComponent(g('text')) : '');
+            case 'geo':
+                return (g('lat') && g('lng')) ? 'geo:' + g('lat') + ',' + g('lng') : '';
+            case 'event':
+                if (!g('summary') || !g('start')) return '';
+                return 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\n' +
+                    'SUMMARY:' + g('summary') + '\n' +
+                    (g('location') ? 'LOCATION:' + g('location') + '\n' : '') +
+                    'DTSTART:' + icalTime(g('start')) + '\n' +
+                    (g('end') ? 'DTEND:' + icalTime(g('end')) + '\n' : '') +
+                    'END:VEVENT\nEND:VCALENDAR';
+            case 'crypto':
+                return (g('coin') && g('address'))
+                    ? g('coin') + ':' + g('address') + (g('amount') ? '?amount=' + g('amount') : '')
+                    : '';
         }
         return '';
     }
@@ -130,7 +170,7 @@
                 });
             } else {
                 input = document.createElement('input');
-                input.type = d.type;
+                input.type = d.type === 'datetime' ? 'datetime-local' : d.type;
                 input.placeholder = d.ph || '';
             }
             input.name = d.name;

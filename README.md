@@ -11,7 +11,7 @@ host and it runs.
 ## What it does
 
 **Free static generator** (no account needed)
-- URL, plain text, email, phone, SMS, Wi-Fi and vCard QR codes
+- URL, text, email, phone, SMS, Wi-Fi, vCard, WhatsApp, location, event and crypto
 - Live preview, four sizes, custom QR + background colours
 - Optional **centre logo** (auto-raises error correction so it still scans)
 - One-click **PNG and SVG** download
@@ -27,8 +27,9 @@ host and it runs.
 - One short link per code: `yoursite.com/q/XXXXXX`, or a custom code like `/q/summer-menu`
 - Change the destination any time — the printed QR never changes
 - Custom colours and a centre logo saved per code; download as PNG or SVG
+- Optional protection per code: password, expiry date and scan limit
 - Every scan is counted; pause or delete a code at any point
-- Per-code analytics with a 14-day scan chart and totals dashboard
+- Per-code analytics: 14-day chart plus device / OS / browser breakdown
 - Export scans to CSV, per code or across every code
 
 ## Why buyers like it
