@@ -13,7 +13,7 @@ function api_labels(): array
 {
     $out = [];
     foreach (['id', 'code', 'codes', 'title', 'target_url', 'short_url', 'slug', 'fg_color', 'bg_color',
-              'is_active', 'scan_count', 'created_at', 'deleted'] as $k) {
+              'is_active', 'disabled_by_admin', 'scan_count', 'created_at', 'deleted'] as $k) {
         $out[$k] = t('apilabel.' . $k);
     }
     return $out;
@@ -139,6 +139,7 @@ function api_code(array $c): array
         'target_url' => $c['target_url'],
         'short_url'  => url('q/' . $c['code']),
         'is_active'  => (bool) $c['is_active'],
+        'disabled_by_admin' => (bool) ($c['admin_disabled'] ?? 0),
         'scan_count' => (int) $c['scan_count'],
         'created_at' => $c['created_at'],
     ];

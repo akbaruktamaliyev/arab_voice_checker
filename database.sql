@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `qr_codes` (
     `expires_at`    DATETIME     NULL,
     `scan_limit`    INT UNSIGNED NULL,
     `is_active`     TINYINT(1)   NOT NULL DEFAULT 1,
+    `admin_disabled` TINYINT(1)  NOT NULL DEFAULT 0,   -- set by an administrator (moderation)
     `scan_count`    INT UNSIGNED NOT NULL DEFAULT 0,
     `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),

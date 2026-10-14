@@ -86,7 +86,7 @@ if ($method === 'PATCH' || $method === 'PUT') {
     if ($id <= 0) {
         api_error('need_id', 400);
     }
-    own_code($pdo, $id, $uid);
+    $row_current = own_code($pdo, $id, $uid);
     $in = api_input();
     $sets = [];
     $params = [];
@@ -101,6 +101,7 @@ if ($method === 'PATCH' || $method === 'PUT') {
         $sets[] = 'title = ?'; $params[] = $t;
     }
     if (isset($in['is_active'])) {
+        if (!empty($row_current['admin_disabled'])) { api_error('disabled', 403); }
         $sets[] = 'is_active = ?'; $params[] = $in['is_active'] ? 1 : 0;
     }
     if (!$sets) {

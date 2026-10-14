@@ -362,6 +362,9 @@ function clean_url(string $value): ?string
 /** Human status for a code row: [label, badge class]. */
 function code_status(array $c): array
 {
+    if (!empty($c['admin_disabled'])) {
+        return [t('status.disabled'), 'badge-off'];
+    }
     if (!$c['is_active']) {
         return [t('status.paused'), 'badge-off'];
     }

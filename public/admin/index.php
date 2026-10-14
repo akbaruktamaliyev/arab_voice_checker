@@ -23,6 +23,7 @@ ob_start();
     <h1 style="margin:0"><?= e(t('adm.title')) ?></h1>
     <div style="display:flex;gap:10px">
         <a class="btn btn-ghost" href="<?= e(url('admin/users.php')) ?>"><?= e(t('adm.users')) ?></a>
+        <a class="btn btn-ghost" href="<?= e(url('admin/codes.php')) ?>"><?= e(t('adm.codes')) ?></a>
         <a class="btn btn-ghost" href="<?= e(url('admin/plans.php')) ?>"><?= e(t('adm.plans')) ?></a>
         <a class="btn btn-ghost" href="<?= e(url('admin/settings.php')) ?>"><?= e(t('adm.settings')) ?></a>
     </div>

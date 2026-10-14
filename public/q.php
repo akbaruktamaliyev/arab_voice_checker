@@ -20,14 +20,19 @@ if ($code === '') {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT id, target_url, is_active, password_hash, expires_at, scan_limit, scan_count
-     FROM qr_codes WHERE code = ?'
+    'SELECT q.id, q.target_url, q.is_active, q.admin_disabled, u.is_blocked AS owner_blocked,
+            q.password_hash, q.expires_at, q.scan_limit, q.scan_count
+     FROM qr_codes q JOIN users u ON u.id = q.user_id WHERE q.code = ?'
 );
 $stmt->execute([$code]);
 $qr = $stmt->fetch();
 
 if (!$qr) {
     standalone_page(t('q.nf_page'), '<h1>' . e(t('q.nf_title')) . '</h1><p class="m">' . e(t('q.nf_text')) . '</p>', 404);
+}
+// Disabled by an administrator, or the owner's account is suspended.
+if ($qr['admin_disabled'] || $qr['owner_blocked']) {
+    standalone_page(t('q.disabled_page'), '<h1>' . e(t('q.disabled_title')) . '</h1><p class="m">' . e(t('q.disabled_text')) . '</p>', 410);
 }
 if (!$qr['is_active']) {
     standalone_page(t('q.paused_page'), '<h1>' . e(t('q.paused_title')) . '</h1><p class="m">' . e(t('q.paused_text')) . '</p>', 410);

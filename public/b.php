@@ -12,7 +12,7 @@ if ($slug === '') {
     standalone_page(t('q.nf_page'), '<h1>' . e(t('b.nf_title')) . '</h1><p class="m">' . e(t('b.invalid')) . '</p>', 404);
 }
 
-$stmt = $pdo->prepare('SELECT * FROM bio_pages WHERE slug = ?');
+$stmt = $pdo->prepare('SELECT p.* FROM bio_pages p JOIN users u ON u.id = p.user_id WHERE p.slug = ? AND u.is_blocked = 0');
 $stmt->execute([$slug]);
 $bio = $stmt->fetch();
 if (!$bio) {

@@ -96,7 +96,7 @@ $pages = max(1, (int) ceil($matched / PER_PAGE));
 $page = min($page, $pages);
 
 $list = $pdo->prepare(
-    "SELECT id, code, title, target_url, is_active, scan_count, scan_limit, expires_at,
+    "SELECT id, code, title, target_url, is_active, admin_disabled, scan_count, scan_limit, expires_at,
             (password_hash IS NOT NULL) AS locked
      FROM qr_codes WHERE $where
      ORDER BY created_at DESC, id DESC

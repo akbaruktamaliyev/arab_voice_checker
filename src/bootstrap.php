@@ -105,6 +105,8 @@ require __DIR__ . '/helpers.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/mailer.php';
 require __DIR__ . '/throttle.php';
+require __DIR__ . '/migrate.php';
+run_migrations($pdo);
 
 // --- Language (i18n) --------------------------------------------------
 $availableLangs = ['en', 'ru', 'uz'];

@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } elseif ($action === 'toggle') {
-        $u = $pdo->prepare('UPDATE qr_codes SET is_active = 1 - is_active WHERE id = ? AND user_id = ?');
+        $u = $pdo->prepare('UPDATE qr_codes SET is_active = 1 - is_active WHERE id = ? AND user_id = ? AND admin_disabled = 0');
         $u->execute([$id, $uid]);
         flash(t('view.status_updated'), 'success');
     }
@@ -248,7 +248,7 @@ ob_start();
                 <form method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="toggle">
-                    <button type="submit" class="btn btn-ghost"><?= e($qr['is_active'] ? t('view.pause') : t('view.activate')) ?></button>
+                    <button type="submit" class="btn btn-ghost" <?= $qr['admin_disabled'] ? 'disabled title="' . e(t('view.admin_disabled')) . '"' : '' ?>><?= e($qr['is_active'] ? t('view.pause') : t('view.activate')) ?></button>
                 </form>
                 <form method="post" action="<?= e(url('delete.php')) ?>"
                       onsubmit='return confirm(<?= e(json_encode(t('view.confirm_delete'), JSON_UNESCAPED_UNICODE)) ?>);'>
